@@ -6,11 +6,24 @@
 /*   By: pgritsen <pgritsen@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2018/07/30 13:18:50 by pgritsen          #+#    #+#             */
-/*   Updated: 2018/07/31 18:21:22 by pgritsen         ###   ########.fr       */
+/*   Updated: 2018/07/31 20:24:47 by pgritsen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "node.h"
+
+char			* g_error = NULL;
+
+const char		* get_error(void)
+{
+	return (g_error ? g_error : "Unkown error!");
+}
+
+void			set_error(const char * msg)
+{
+	g_error ? ft_memdel((void **)&g_error) : 0;
+	g_error = ft_strdup(msg);
+}
 
 void	clear_prompt(void)
 {
@@ -20,104 +33,107 @@ void	clear_prompt(void)
 	ft_printf("\r%*s\r", w.ws_col, "");
 }
 
-void	display_messages(int * sockfd)
+void			get_messages(int * sockfd)
 {
 	char			buffer[320];
-	static char		welcome_msg = 1;
 
 	while (recv(*sockfd, buffer, sizeof(buffer), 0) > 0)
 	{
 		clear_prompt();
 		ft_putstr(buffer);
-		!welcome_msg ? rl_forced_update_display() : 0;
-		welcome_msg = 0;
+		rl_forced_update_display();
 	}
 }
 
-void	get_chat_history(int sockfd)
+int				init_socket(struct sockaddr_in * conn_data, const char * server_ip)
 {
-	char			buffer[1024];
+	int		ret_fd;
 
+	if ((ret_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
+	{
+		set_error("Unable to create socket");
+		return (-1);
+	}
+	memset(conn_data, '0', sizeof(*conn_data));
+	conn_data->sin_family = AF_INET;
+	conn_data->sin_port = htons(PORT);
+	if(inet_pton(AF_INET, server_ip, &conn_data->sin_addr) <= 0)
+	{
+		set_error("Invalid address");
+		return (-1);
+	}
+	else if (connect(ret_fd, (struct sockaddr *)conn_data, sizeof(*conn_data)) < 0)
+	{
+		set_error("Couldn't connect to server, try again later.\n");
+		return (-1);
+	}
+	return (ret_fd);
+}
+
+void			handle_input(int sockfd, char * nickname)
+{
+	size_t	msg_len;
+	char	* msg;
+	char	* trash;
+	char	prompt[128];
+
+	sprintf(prompt, "You -> [%s]: ", nickname);
+	free(nickname);
+	while ((msg = readline(prompt)))
+	{
+		trash = ft_strtrim(msg);
+		free(msg);
+		msg_len = ft_strlen(trash);
+		if (msg_len > 250)
+			ft_putendl("* Your message too long, it was trimmed to 250 symbols *");
+		msg = ft_strnew(255);
+		ft_strncpy(msg, trash, 255);
+		free(trash);
+		if ((msg_len = ft_strlen(msg)) > 0)
+			send(sockfd, msg, 256, 0);
+		free(msg);
+	}
+}
+
+void			get_startup_data(int sockfd)
+{
+	char		buffer[1024];
+	char		* nickname;
+	char		* trash;
+	pthread_t	thread;
+
+	recv(sockfd, buffer, 32, 0);
+	ft_putendl(buffer);
+	do
+	{
+		if (!(nickname = readline("Enter your login: ")))
+			return ;
+		trash = ft_strtrim(nickname);
+		free(nickname);
+		nickname = ft_strnew(32);
+		ft_strncpy(nickname, trash, 31);
+		free(trash);
+	}
+	while (ft_strlen(nickname) <= 0);
+	send(sockfd, nickname, 32, 0);
 	while (recv(sockfd, buffer, sizeof(buffer), 0) > 0)
 		if (!*buffer)
 			break ;
 		else
-		 ft_putstr(buffer);
+			ft_putstr(buffer);
+	pthread_create(&thread, NULL, (void *(*)(void *))(get_messages), (void *)&sockfd);
+	handle_input(sockfd, nickname);
 }
 
-int		main(int ac, char **av)
+int				main(int ac, char **av)
 {
-	struct sockaddr_in	address;
-	socklen_t			addrlen = sizeof(address);
-	int					sock;
+	struct sockaddr_in	conn_data;
+	int					sockfd;
 
 	if (ac < 2)
-	{
-		ft_printf("Specify server address!\n");
-		return (0);
-	}
-
-	if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0)
-	{
-		perror("socket");
-		return (-1);
-	}
-
-	memset(&address, '0', addrlen);
-
-	address.sin_family = AF_INET;
-	address.sin_port = htons(PORT);
-
-	if(inet_pton(AF_INET, av[1], &address.sin_addr) <= 0)
-	{
-		printf("Invalid address\n");
-		return (-1);
-	}
-
-	if (connect(sock, (struct sockaddr *)&address, addrlen) < 0)
-	{
-		printf("Connection Failed\n");
-		return (-1);
-	}
-
-	char			prompt[128];
-	char			* buffer;
-	char			* trash;
-	size_t			msg_len;
-	pthread_t		thread;
-
-	do
-	{
-		if (!(buffer = readline("Enter your login: ")))
-			return (0);
-		trash = ft_strtrim(buffer);
-		free(buffer);
-		buffer = ft_strsub(trash, 0, 31);
-		free(trash);
-	}
-	while (ft_strlen(buffer) <= 0);
-	send(sock, buffer, ft_strlen(buffer) + 1, 0);
-
-	get_chat_history(sock);
-	pthread_create(&thread, NULL, (void *(*)(void *))(display_messages), (void *)&sock);
-	usleep(500);
-	sprintf(prompt, "You -> [%s]: ", buffer);
-	free(buffer);
-	while ((buffer = readline(prompt)))
-	{
-		trash = ft_strtrim(buffer);
-		free(buffer);
-		msg_len = ft_strlen(trash);
-		if (msg_len > 250)
-		{
-			clear_prompt();
-			ft_putendl("* Your message too long, it was trimmed to 250 symbols *");
-		}
-		buffer = ft_strsub(trash, 0, 250);
-		free(trash);
-		if ((msg_len = ft_strlen(buffer)) > 0)
-			send(sock, buffer, msg_len + 1, 0);
-		free(buffer);
-	}
+		return (ft_printf("Usage: ./42chat [server_ip_address]\n") * 0 + EXIT_FAILURE);
+	else if ((sockfd = init_socket(&conn_data, av[1])) < 0)
+		return (ft_printf("%s\n", get_error()) * 0 + EXIT_FAILURE);
+	get_startup_data(sockfd);
 	return (0);
 }

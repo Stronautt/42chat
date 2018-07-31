@@ -6,7 +6,7 @@
 /*   By: pgritsen <pgritsen@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2018/07/30 17:43:46 by pgritsen          #+#    #+#             */
-/*   Updated: 2018/07/31 17:44:22 by pgritsen         ###   ########.fr       */
+/*   Updated: 2018/07/31 20:23:36 by pgritsen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,14 +29,12 @@
 # include <readline/history.h>
 # include <signal.h>
 
-#define PORT 1488
+#define PORT 2089
 
 typedef struct	s_client
 {
 	int		sockfd;
 	char	nickname[32];
 }				t_client;
-
-# define VERSION "Chat1488: v1.0.3               " // Important to keep size of this string to 32 characters
 
 #endif
