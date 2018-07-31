@@ -6,7 +6,7 @@
 /*   By: pgritsen <pgritsen@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2018/07/30 13:18:50 by pgritsen          #+#    #+#             */
-/*   Updated: 2018/07/31 14:01:10 by pgritsen         ###   ########.fr       */
+/*   Updated: 2018/07/31 18:21:22 by pgritsen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,6 +32,17 @@ void	display_messages(int * sockfd)
 		!welcome_msg ? rl_forced_update_display() : 0;
 		welcome_msg = 0;
 	}
+}
+
+void	get_chat_history(int sockfd)
+{
+	char			buffer[1024];
+
+	while (recv(sockfd, buffer, sizeof(buffer), 0) > 0)
+		if (!*buffer)
+			break ;
+		else
+		 ft_putstr(buffer);
 }
 
 int		main(int ac, char **av)
@@ -79,10 +90,15 @@ int		main(int ac, char **av)
 	{
 		if (!(buffer = readline("Enter your login: ")))
 			return (0);
+		trash = ft_strtrim(buffer);
+		free(buffer);
+		buffer = ft_strsub(trash, 0, 31);
+		free(trash);
 	}
 	while (ft_strlen(buffer) <= 0);
 	send(sock, buffer, ft_strlen(buffer) + 1, 0);
 
+	get_chat_history(sock);
 	pthread_create(&thread, NULL, (void *(*)(void *))(display_messages), (void *)&sock);
 	usleep(500);
 	sprintf(prompt, "You -> [%s]: ", buffer);

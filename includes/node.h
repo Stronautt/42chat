@@ -6,7 +6,7 @@
 /*   By: pgritsen <pgritsen@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2018/07/30 17:43:46 by pgritsen          #+#    #+#             */
-/*   Updated: 2018/07/31 13:43:21 by pgritsen         ###   ########.fr       */
+/*   Updated: 2018/07/31 17:44:22 by pgritsen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,6 +14,7 @@
 # define NODE_H
 
 # include "libft.h"
+# include <errno.h>
 # include <unistd.h>
 # include <fcntl.h>
 # include <stdio.h>
@@ -28,20 +29,14 @@
 # include <readline/history.h>
 # include <signal.h>
 
-#define PORT 8888
+#define PORT 1488
 
-typedef struct	s_user
+typedef struct	s_client
 {
 	int		sockfd;
 	char	nickname[32];
-}				t_user;
+}				t_client;
 
-/*
-**		Chat.c
-**		↓↓↓↓↓↓
-*/
-
-void	display_messages(int * sockfd);
-void	proccess_client_message(t_user * user);
+# define VERSION "Chat1488: v1.0.3               " // Important to keep size of this string to 32 characters
 
 #endif

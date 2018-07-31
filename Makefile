@@ -6,18 +6,18 @@
 #    By: pgritsen <pgritsen@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2017/12/10 17:05:19 by pgritsen          #+#    #+#              #
-#    Updated: 2018/07/31 13:44:37 by pgritsen         ###   ########.fr        #
+#    Updated: 2018/07/31 18:20:34 by pgritsen         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
-NAME_1		=	server
-NAME_2		=	chat1488
+NAME_1		=	chat_server
+NAME_2		=	42chat
 
 CC			=	gcc
 
 CFLAGS		=	-g3
 CFLAGS		+=	-Wextra -Werror -Wall
-CFLAGS		+=	-O3 -flto=thin
+CFLAGS		+=	-O2 -flto=thin -fdata-sections -ffunction-sections
 
 HDRSDIR		=	./includes
 
