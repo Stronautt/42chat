@@ -134,7 +134,7 @@ void			handle_client(t_dlist * client_node)
 	recv(client->sockfd, client->nickname, 32, 0);
 	sync_chat_history(client);
 	log_client_actions(client, "CONNECTED");
-	while ((msg_len = recv(client->sockfd, msg, sizeof(msg), 0)) > 0)
+	while (good_connection(client->sockfd) && (msg_len = recv(client->sockfd, msg, sizeof(msg), 0)) > 0)
 	{
 		msg[msg_len] = 0;
 		public_msg_len = sprintf(public_msg, "[%s]: %s\n", client->nickname, msg);
@@ -142,24 +142,19 @@ void			handle_client(t_dlist * client_node)
 		pthread_mutex_lock(&g_mutex);
 		write(g_log_file_fd, public_msg, public_msg_len);
 		pthread_mutex_unlock(&g_mutex);
-		while ((clients = clients->next) != g_clients)
+		while ((clients = clients->next) != g_clients && clients)
 			if (clients->content != client)
 			{
 				t_client	*tmp_client = clients->content;
 
-				if (!good_connection(tmp_client->sockfd))
-				{
-					t_dlist	*prev = clients->prev;
-					log_client_actions(tmp_client, "DISCONNECTED");
-					pthread_mutex_lock(&g_mutex);
-					ft_dlstdelelem(&clients);
-					pthread_mutex_unlock(&g_mutex);
-					clients = prev;
-					continue ;
-				}
-				send(tmp_client->sockfd, public_msg, public_msg_len + 1, 0);
+				if (good_connection(tmp_client->sockfd))
+					send(tmp_client->sockfd, public_msg, public_msg_len + 1, 0);
 			}
 	}
+	log_client_actions(client, "DISCONNECTED");
+	pthread_mutex_lock(&g_mutex);
+	ft_dlstdelelem(&client_node);
+	pthread_mutex_unlock(&g_mutex);
 }
 
 void			handle_connections(int server, struct sockaddr_in * conn_data)
