@@ -6,7 +6,7 @@
 /*   By: pgritsen <pgritsen@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2018/07/30 17:43:46 by pgritsen          #+#    #+#             */
-/*   Updated: 2018/07/31 13:15:07 by pgritsen         ###   ########.fr       */
+/*   Updated: 2018/07/31 13:43:21 by pgritsen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,6 +18,7 @@
 # include <fcntl.h>
 # include <stdio.h>
 # include <sys/socket.h>
+# include <sys/ioctl.h>
 # include <stdlib.h>
 # include <netinet/in.h>
 # include <arpa/inet.h>

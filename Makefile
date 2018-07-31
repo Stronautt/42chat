@@ -6,7 +6,7 @@
 #    By: pgritsen <pgritsen@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2017/12/10 17:05:19 by pgritsen          #+#    #+#              #
-#    Updated: 2018/07/30 21:51:16 by pgritsen         ###   ########.fr        #
+#    Updated: 2018/07/31 13:44:37 by pgritsen         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -42,7 +42,7 @@ LIBSDEPS	=	$(addprefix $(LIBFOLDER)/, libft/libft.a)
 INCLUDES	=	-I./includes
 INCLUDES	+=	$(addprefix -I$(LIBFOLDER)/, libft)
 
-LIBRARIES	=	$(addprefix -L$(LIBFOLDER)/, libft) -lft -lreadline
+LIBRARIES	=	$(addprefix -L$(LIBFOLDER)/, libft) -lft -lreadline -lpthread
 
 uniq		=	$(if $1,$(firstword $1) $(call uniq,$(filter-out $(firstword $1),$1)))
 

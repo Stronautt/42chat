@@ -6,7 +6,7 @@
 /*   By: pgritsen <pgritsen@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2018/07/30 13:18:50 by pgritsen          #+#    #+#             */
-/*   Updated: 2018/07/31 13:08:17 by pgritsen         ###   ########.fr       */
+/*   Updated: 2018/07/31 13:42:08 by pgritsen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -52,7 +52,7 @@ int		main(int ac, char **av)
 		return (-1);
 	}
 
-	memset(&address, 0, addrlen);
+	memset(&address, '0', addrlen);
 
 	address.sin_family = AF_INET;
 	address.sin_port = htons(PORT);
