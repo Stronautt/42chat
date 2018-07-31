@@ -6,7 +6,7 @@
 /*   By: pgritsen <pgritsen@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2018/07/30 13:18:50 by pgritsen          #+#    #+#             */
-/*   Updated: 2018/07/31 13:42:08 by pgritsen         ###   ########.fr       */
+/*   Updated: 2018/07/31 14:01:10 by pgritsen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -83,7 +83,6 @@ int		main(int ac, char **av)
 	while (ft_strlen(buffer) <= 0);
 	send(sock, buffer, ft_strlen(buffer) + 1, 0);
 
-	rl_bind_key ('c', (rl_command_func_t *)&clear_prompt);
 	pthread_create(&thread, NULL, (void *(*)(void *))(display_messages), (void *)&sock);
 	usleep(500);
 	sprintf(prompt, "You -> [%s]: ", buffer);
