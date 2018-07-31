@@ -99,7 +99,7 @@ void	sync_chat_history(t_client * client)
 	}
 }
 
-void			log_connected_client(t_client * client)
+void			log_client_actions(t_client * client, const char * status)
 {
 	time_t		timer;
 	char		buffer[32];
@@ -109,7 +109,7 @@ void			log_connected_client(t_client * client)
 	tm_info = localtime(&timer);
 	strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S", tm_info);
 	pthread_mutex_lock(&g_mutex);
-	dprintf(g_log_sys_file_fd, "[%s][%s] -> CONNECTED\n", buffer, client->nickname);
+	dprintf(g_log_sys_file_fd, "[%s][%s] -> %s\n", buffer, client->nickname, status);
 	pthread_mutex_unlock(&g_mutex);
 }
 
@@ -133,7 +133,7 @@ void			handle_client(t_dlist * client_node)
 	send(client->sockfd, invite_msg, sizeof(invite_msg), 0);
 	recv(client->sockfd, client->nickname, 32, 0);
 	sync_chat_history(client);
-	log_connected_client(client);
+	log_client_actions(client, "CONNECTED");
 	while ((msg_len = recv(client->sockfd, msg, sizeof(msg), 0)) > 0)
 	{
 		msg[msg_len] = 0;
@@ -150,6 +150,7 @@ void			handle_client(t_dlist * client_node)
 				if (!good_connection(tmp_client->sockfd))
 				{
 					t_dlist	*prev = clients->prev;
+					log_client_actions(tmp_client, "DISCONNECTED");
 					pthread_mutex_lock(&g_mutex);
 					ft_dlstdelelem(&clients);
 					pthread_mutex_unlock(&g_mutex);
