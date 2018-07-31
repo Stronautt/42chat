@@ -13,9 +13,11 @@
 #include "node.h"
 
 # define LOG_FILE_PATH "./log_chat.txt"
+# define LOG_SYS_FILE_PATH "./log_sys.txt"
 
 char			* g_error = NULL;
 int				g_log_file_fd = 0;
+int				g_log_sys_file_fd = 0;
 t_dlist			* g_clients = NULL;
 pthread_mutex_t	g_mutex = PTHREAD_MUTEX_INITIALIZER;
 
@@ -70,6 +72,11 @@ int				init_socket(struct sockaddr_in * conn_data)
 		set_error("Log file can't be created!");
 		return (-1);
 	}
+	else if ((g_log_sys_file_fd = open(LOG_SYS_FILE_PATH, O_WRONLY | O_APPEND | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP)) < 0)
+	{
+	  	set_error("Sys log file can't be created!");
+		return (-1);
+	}
 	return (ret_fd);
 }
 
@@ -92,6 +99,20 @@ void	sync_chat_history(t_client * client)
 	}
 }
 
+void			log_connected_client(t_client * client)
+{
+	time_t		timer;
+	char		buffer[32];
+	struct tm	* tm_info;
+
+	time(&timer);
+	tm_info = localtime(&timer);
+	strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S", tm_info);
+	pthread_mutex_lock(&g_mutex);
+	dprintf(g_log_sys_file_fd, "[%s][%s] -> CONNECTED\n", buffer, client->nickname);
+	pthread_mutex_unlock(&g_mutex);
+}
+
 void			handle_client(t_dlist * client_node)
 {
 	char		msg[256];
@@ -112,6 +133,7 @@ void			handle_client(t_dlist * client_node)
 	send(client->sockfd, invite_msg, sizeof(invite_msg), 0);
 	recv(client->sockfd, client->nickname, 32, 0);
 	sync_chat_history(client);
+	log_connected_client(client);
 	while ((msg_len = recv(client->sockfd, msg, sizeof(msg), 0)) > 0)
 	{
 		msg[msg_len] = 0;
