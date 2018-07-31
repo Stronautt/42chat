@@ -6,7 +6,7 @@
 /*   By: pgritsen <pgritsen@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2018/07/30 13:18:50 by pgritsen          #+#    #+#             */
-/*   Updated: 2018/07/30 21:58:31 by pgritsen         ###   ########.fr       */
+/*   Updated: 2018/07/31 13:08:17 by pgritsen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,10 +22,10 @@ void	clear_prompt(void)
 
 void	display_messages(int * sockfd)
 {
-	char			buffer[1024] = {0};
+	char			buffer[320];
 	static char		welcome_msg = 1;
 
-	while (read(*sockfd , buffer, sizeof(buffer)))
+	while (recv(*sockfd, buffer, sizeof(buffer), 0) > 0)
 	{
 		clear_prompt();
 		ft_putstr(buffer);
@@ -71,6 +71,8 @@ int		main(int ac, char **av)
 
 	char			prompt[128];
 	char			* buffer;
+	char			* trash;
+	size_t			msg_len;
 	pthread_t		thread;
 
 	do
@@ -88,8 +90,18 @@ int		main(int ac, char **av)
 	free(buffer);
 	while ((buffer = readline(prompt)))
 	{
-		if (ft_strlen(buffer) > 0)
-			send(sock, buffer, ft_strlen(buffer) + 1, 0);
+		trash = ft_strtrim(buffer);
+		free(buffer);
+		msg_len = ft_strlen(trash);
+		if (msg_len > 250)
+		{
+			clear_prompt();
+			ft_putendl("* Your message too long, it was trimmed to 250 symbols *");
+		}
+		buffer = ft_strsub(trash, 0, 250);
+		free(trash);
+		if ((msg_len = ft_strlen(buffer)) > 0)
+			send(sock, buffer, msg_len + 1, 0);
 		free(buffer);
 	}
 	return (0);

@@ -6,7 +6,7 @@
 /*   By: pgritsen <pgritsen@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2018/07/30 17:43:46 by pgritsen          #+#    #+#             */
-/*   Updated: 2018/07/30 21:47:57 by pgritsen         ###   ########.fr       */
+/*   Updated: 2018/07/31 13:15:07 by pgritsen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,6 +15,7 @@
 
 # include "libft.h"
 # include <unistd.h>
+# include <fcntl.h>
 # include <stdio.h>
 # include <sys/socket.h>
 # include <stdlib.h>

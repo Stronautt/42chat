@@ -6,13 +6,15 @@
 /*   By: pgritsen <pgritsen@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2018/07/30 13:18:30 by pgritsen          #+#    #+#             */
-/*   Updated: 2018/07/30 21:49:25 by pgritsen         ###   ########.fr       */
+/*   Updated: 2018/07/31 13:18:23 by pgritsen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "node.h"
 
-t_dlist	*g_clients = NULL;
+int				g_log_file_fd = 0;
+t_dlist			* g_clients = NULL;
+pthread_mutex_t	g_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 int		good_connection(int sockfd)
 {
@@ -31,10 +33,10 @@ void	proccess_client_message(t_user * user)
 	t_dlist	* tmp = g_clients;
 	size_t	msg_len;
 	size_t	send_buffer_len;
-	char	buffer[1024];
-	char	send_buffer[1280];
+	char	buffer[256];
+	char	send_buffer[320];
 
-	while ((msg_len = read(user->sockfd , buffer, sizeof(buffer))))
+	while ((msg_len = recv(user->sockfd, buffer, sizeof(buffer), 0)) > 0)
 	{
 		buffer[msg_len] = 0;
 		send_buffer_len = sprintf(send_buffer, "[%s]: %s\n", user->nickname, buffer);
@@ -52,6 +54,9 @@ void	proccess_client_message(t_user * user)
 				}
 				send(tmp_user->sockfd, send_buffer, send_buffer_len + 1, 0);
 			}
+		pthread_mutex_lock(&g_mutex);
+		write(g_log_file_fd, send_buffer, send_buffer_len);
+		pthread_mutex_unlock(&g_mutex);
 	}
 }
 
@@ -88,6 +93,13 @@ int		main(void)
 		perror("listen");
 		return (EXIT_FAILURE);
 	}
+
+	if ((g_log_file_fd = open("log_chat.txt", O_WRONLY | O_APPEND | O_CREAT, S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP)) < 0)
+	{
+		ft_putendl("Log file can't be created!");
+		return (EXIT_FAILURE);
+	}
+
 	pthread_t	thread;
 	char		invite_msg[] = "Welcome to Chat 1488!\n";
 
@@ -96,7 +108,11 @@ int		main(void)
 		send(new_socket, invite_msg, sizeof(invite_msg), 0);
 		t_user	*new_user = ft_memalloc(sizeof(t_user));
 		new_user->sockfd = new_socket;
-		read(new_user->sockfd, new_user->nickname, 32);
+		if (recv(new_socket, new_user->nickname, 32, 0) < 0)
+		{
+			free(new_user);
+			continue ;
+		}
 		ft_dlstpush(&g_clients, ft_dlstnew(new_user, sizeof(t_user)));
 		pthread_create(&thread, NULL, (void *(*)(void *))(proccess_client_message), (void *)new_user);
 	}
