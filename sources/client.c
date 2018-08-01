@@ -6,7 +6,7 @@
 /*   By: pgritsen <pgritsen@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2018/07/30 13:18:50 by pgritsen          #+#    #+#             */
-/*   Updated: 2018/08/01 13:10:28 by pgritsen         ###   ########.fr       */
+/*   Updated: 2018/08/01 17:42:27 by pgritsen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -35,12 +35,13 @@ void	clear_prompt(void)
 
 void			get_messages(int * sockfd)
 {
-	char			buffer[320];
+	char			* buffer;
 
-	while (recv(*sockfd, buffer, sizeof(buffer), MSG_WAITALL) > 0)
+	while (recieve_data(*sockfd, (void **)&buffer, MSG_WAITALL) > 0)
 	{
 		clear_prompt();
 		ft_putstr(buffer);
+		ft_memdel((void**)&buffer);
 		rl_forced_update_display();
 	}
 }
@@ -67,10 +68,29 @@ int				init_socket(struct sockaddr_in * conn_data, const char * server_ip)
 		set_error("Couldn't connect to server, try again later.\n");
 		return (-1);
 	}
+	else if (send_command(ret_fd, CONNECT, 0) < 0)
+	{
+		set_error("Couldn't send data to server, try again later.\n");
+		return (-1);
+	}
 	return (ret_fd);
 }
 
-void			handle_input(int sockfd, char * nickname)
+int				try_reconnect(int * sockfd, struct sockaddr_in * conn_data, pthread_t * thread)
+{
+	pthread_cancel(*thread);
+	if ((*sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
+		return (-1);
+	else if (connect(*sockfd, (struct sockaddr *)conn_data, sizeof(*conn_data)) < 0)
+		return (-1);
+	else if (send_command(*sockfd, RECONNECT, 0) < 0)
+		return (-1);
+	pthread_create(thread, NULL, (void *(*)(void *))(get_messages), (void *)sockfd);
+	pthread_detach(*thread);
+	return (1);
+}
+
+void			handle_input(int sockfd, char * nickname, struct sockaddr_in * conn_data, pthread_t * thread)
 {
 	size_t	msg_len;
 	char	* msg;
@@ -84,45 +104,63 @@ void			handle_input(int sockfd, char * nickname)
 		trash = ft_strtrim(msg);
 		free(msg);
 		msg_len = ft_strlen(trash);
-		if (msg_len > 250)
-			ft_putendl("* Your message too long, it was trimmed to 250 symbols *");
-		msg = ft_strnew(255);
-		ft_strncpy(msg, trash, 255);
+		if (msg_len > 255)
+			ft_putendl("* Your message too long, it was trimmed to 255 symbols *");
+		msg = ft_strsub(trash, 0, 255);
 		free(trash);
 		if ((msg_len = ft_strlen(msg)) > 0)
-			send(sockfd, msg, 256, 0);
+			if (send_data(sockfd, msg, msg_len + 1, 0) < 0)
+			{
+				ft_putendl("* You were diconnected from server, reconnecting... *");
+				while (try_reconnect(&sockfd, conn_data, thread) < 0)
+					;
+				ft_putendl("* You were reconnected, enjoy! *");
+			}
 		free(msg);
 	}
 }
 
-void			get_startup_data(int sockfd)
+void			get_startup_data(int sockfd, struct sockaddr_in * conn_data)
 {
-	char		buffer[1024];
+	char		* buffer;
 	char		* nickname;
 	char		* trash;
 	pthread_t	thread;
+	size_t		nickname_len;
 
-	recv(sockfd, buffer, 32, MSG_WAITALL);
-	ft_putendl(buffer);
+	if (recieve_data(sockfd, (void **)&trash, MSG_WAITALL) < 0)
+		exit(ft_printf("Couldn't connect to server, try again later.\n") * 0 + EXIT_FAILURE);
+	ft_putendl(trash);
+	ft_memdel((void **)&trash);
 	do
 	{
 		if (!(nickname = readline("Enter your login: ")))
 			return ;
 		trash = ft_strtrim(nickname);
 		free(nickname);
-		nickname = ft_strnew(32);
-		ft_strncpy(nickname, trash, 31);
+		nickname = ft_strsub(trash, 0, 31);
 		free(trash);
+		if (!nickname_is_valid(nickname))
+		{
+			ft_putendl("* Login must containt only ascii letters and numbers *");
+			nickname[0] = 0;
+		}
 	}
-	while (ft_strlen(nickname) <= 0);
-	send(sockfd, nickname, 32, 0);
-	while (recv(sockfd, buffer, sizeof(buffer), MSG_WAITALL) > 0)
+	while ((nickname_len = ft_strlen(nickname)) <= 0);
+	send_data(sockfd, nickname, nickname_len + 1, 0);
+	while (recieve_data(sockfd, (void **)&buffer, MSG_WAITALL) > 0)
+	{
 		if (!*buffer)
+		{
+			ft_memdel((void **)&buffer);
 			break ;
-		else
-			ft_putstr(buffer);
+		}
+		ft_putstr(buffer);
+		ft_memdel((void **)&buffer);
+	}
 	pthread_create(&thread, NULL, (void *(*)(void *))(get_messages), (void *)&sockfd);
-	handle_input(sockfd, nickname);
+	pthread_detach(thread);
+	handle_input(sockfd, nickname, conn_data, &thread);
 }
 
 int				main(int ac, char **av)
@@ -134,6 +172,6 @@ int				main(int ac, char **av)
 		return (ft_printf("Usage: ./42chat [server_ip_address]\n") * 0 + EXIT_FAILURE);
 	else if ((sockfd = init_socket(&conn_data, av[1])) < 0)
 		return (ft_printf("%s\n", get_error()) * 0 + EXIT_FAILURE);
-	get_startup_data(sockfd);
+	get_startup_data(sockfd, &conn_data);
 	return (0);
 }

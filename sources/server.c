@@ -6,7 +6,7 @@
 /*   By: pgritsen <pgritsen@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2018/07/31 17:16:33 by pgritsen          #+#    #+#             */
-/*   Updated: 2018/08/01 13:06:57 by pgritsen         ###   ########.fr       */
+/*   Updated: 2018/08/01 17:28:18 by pgritsen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,18 +30,6 @@ void			set_error(const char * msg)
 {
 	g_error ? ft_memdel((void **)&g_error) : 0;
 	g_error = ft_strdup(msg);
-}
-
-int		good_connection(int sockfd)
-{
-	int			error = 0;
-	socklen_t	len = sizeof (error);
-
-	if (getsockopt (sockfd, SOL_SOCKET, SO_ERROR, &error, &len) != 0)
-		return (0);
-	else if (error)
-		return (0);
-	return (1);
 }
 
 int				init_socket(struct sockaddr_in * conn_data)
@@ -74,7 +62,7 @@ int				init_socket(struct sockaddr_in * conn_data)
 	}
 	else if ((g_log_sys_file_fd = open(LOG_SYS_FILE_PATH, O_WRONLY | O_APPEND | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP)) < 0)
 	{
-	  	set_error("Sys log file can't be created!");
+		set_error("Sys log file can't be created!");
 		return (-1);
 	}
 	return (ret_fd);
@@ -87,71 +75,116 @@ void	sync_chat_history(t_client * client)
 	if ((log_fd = open(LOG_FILE_PATH, O_RDONLY)) > 0)
 	{
 		char	buffer[1024];
-		size_t	buf_len;
+		ssize_t	buf_len;
 
-		while ((buf_len = read(log_fd, buffer, sizeof(buffer) - 1)))
+		while ((buf_len = read(log_fd, buffer, sizeof(buffer) - 1)) > 0)
 		{
 			buffer[buf_len] = 0;
-			send(client->sockfd, buffer, sizeof(buffer), 0);
+			send_data(client->sockfd, buffer, buf_len + 1, 0);
 		}
-		buffer[0] = 0;
-		send(client->sockfd, buffer, sizeof(buffer), 0);
+		if (buf_len < 0)
+			send_data(client->sockfd, "* Unable to load history *\n", 28, 0);
 	}
+	else
+		send_data(client->sockfd, "* Unable to load history *\n", 28, 0);
+	send_data(client->sockfd, "", 1, 0);
 }
 
 void			log_client_actions(t_client * client, const char * status)
 {
 	time_t		timer;
 	char		buffer[32];
+	char		msg[128];
 	struct tm	* tm_info;
+	t_dlist		* clients = g_clients;
 
 	time(&timer);
 	tm_info = localtime(&timer);
 	strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S", tm_info);
 	pthread_mutex_lock(&g_mutex);
 	dprintf(g_log_sys_file_fd, "[%s][%s] -> %s\n", buffer, client->nickname, status);
+	sprintf(msg, "[%s] -> %s\n", client->nickname, status);
+	dprintf(g_log_file_fd, "%s", msg);
+	while ((clients = clients->next) != g_clients && clients)
+		if (clients->content != client)
+		{
+			t_client	*tmp_client = clients->content;
+			send_data(tmp_client->sockfd, msg, ft_strlen(msg) + 1, 0);
+		}
 	pthread_mutex_unlock(&g_mutex);
+}
+
+void			get_nickname(t_client * client)
+{
+	char		* ret;
+	char		* raw;
+	char		* trimmed;
+
+	if (recieve_data(client->sockfd, (void **)&ret, MSG_WAITALL) < 0)
+		pthread_exit(NULL);
+	else if (!(raw = ft_strsub(ret, 0, 31)))
+		pthread_exit(NULL);
+	ft_memdel((void **)&ret);
+	trimmed = ft_strtrim(raw);
+	ft_memdel((void **)&raw);
+	if (ft_strlen(trimmed) == 0 || !nickname_is_valid(trimmed))
+		ft_strncpy(client->nickname, "H@ZZk3R", 31);
+	else
+		ft_strncpy(client->nickname, trimmed, 31);
+	ft_memdel((void **)&trimmed);
+}
+
+void			trace_income_msgs(t_client * client)
+{
+	ssize_t		msg_l;
+	ssize_t		public_msg_l;
+	char		* msg;
+	char		* public_msg;
+	t_dlist		* clients = g_clients;
+
+	while (good_connection(client->sockfd) &&
+		(msg_l = recieve_data(client->sockfd, (void **)&msg, MSG_WAITALL)) > 0)
+	{
+		if (!(public_msg = ft_strnew(msg_l + ft_strlen(client->nickname) + 16)))
+			pthread_exit(NULL);
+		msg[msg_l] = 0;
+		public_msg_l = sprintf(public_msg, "[%s]: %s\n", client->nickname, msg);
+		ft_memdel((void **)&msg);
+		pthread_mutex_lock(&g_mutex);
+		public_msg[public_msg_l] = 0;
+		write(g_log_file_fd, public_msg, public_msg_l);
+		while ((clients = clients->next) != g_clients && clients)
+			if (clients->content != client)
+				send_data(((t_client *)(clients->content))->sockfd,
+							public_msg, public_msg_l + 1, 0);
+		ft_memdel((void **)&public_msg);
+		pthread_mutex_unlock(&g_mutex);
+	}
 }
 
 void			handle_client(t_dlist * client_node)
 {
-	char		msg[256];
-	size_t		msg_len;
-	char		public_msg[512];
-	size_t		public_msg_len;
-	char		invite_msg[32] = "Welcome to 42Chat!\n";
+	t_command	cmd;
+	char		invite_msg[] = "Welcome to 42Chat!\n";
 	t_client	* client = client_node->content;
-	t_dlist		* clients = g_clients;
 
-	if (!good_connection(client->sockfd))
+	if (recieve_command(client->sockfd, &cmd, MSG_WAITALL) > 0)
 	{
-		pthread_mutex_lock(&g_mutex);
-		ft_dlstdelelem(&client_node);
-		pthread_mutex_unlock(&g_mutex);
-		return ;
+		if (cmd == CONNECT)
+		{
+			if (send_data(client->sockfd, invite_msg, sizeof(invite_msg), 0) < 0)
+				pthread_exit(NULL);
+			get_nickname(client);
+			sync_chat_history(client);
+			log_client_actions(client, "CONNECTED");
+		}
+		else if (cmd == RECONNECT)
+			log_client_actions(client, "RECONNECTED");
+		else
+			pthread_exit(NULL);
+		trace_income_msgs(client);
+		log_client_actions(client, "DISCONNECTED");
 	}
-	send(client->sockfd, invite_msg, sizeof(invite_msg), 0);
-	recv(client->sockfd, client->nickname, 32, MSG_WAITALL);
-	sync_chat_history(client);
-	log_client_actions(client, "CONNECTED");
-	while (good_connection(client->sockfd) && (msg_len = recv(client->sockfd, msg, sizeof(msg), MSG_WAITALL)) > 0)
-	{
-		msg[msg_len] = 0;
-		public_msg_len = sprintf(public_msg, "[%s]: %s\n", client->nickname, msg);
-		public_msg[public_msg_len] = 0;
-		pthread_mutex_lock(&g_mutex);
-		write(g_log_file_fd, public_msg, public_msg_len);
-		while ((clients = clients->next) != g_clients && clients)
-			if (clients->content != client)
-			{
-				t_client	*tmp_client = clients->content;
-
-				if (good_connection(tmp_client->sockfd))
-					send(tmp_client->sockfd, public_msg, public_msg_len + 1, 0);
-			}
-		pthread_mutex_unlock(&g_mutex);
-	}
-	log_client_actions(client, "DISCONNECTED");
 	pthread_mutex_lock(&g_mutex);
 	ft_dlstdelelem(&client_node);
 	pthread_mutex_unlock(&g_mutex);

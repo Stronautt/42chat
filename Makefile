@@ -6,7 +6,7 @@
 #    By: pgritsen <pgritsen@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2017/12/10 17:05:19 by pgritsen          #+#    #+#              #
-#    Updated: 2018/07/31 18:20:34 by pgritsen         ###   ########.fr        #
+#    Updated: 2018/08/01 15:49:52 by pgritsen         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -25,8 +25,8 @@ HDRS		=	$(addprefix $(HDRSDIR)/, node.h)
 
 SRCSDIR		=	./sources
 
-SRCS_1		=	server.c
-SRCS_2		=	client.c
+SRCS_1		=	server.c data_exchange.c data_validation.c
+SRCS_2		=	client.c data_exchange.c data_validation.c
 
 OBJDIR		=	./obj
 
