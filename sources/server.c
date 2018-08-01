@@ -141,7 +141,6 @@ void			handle_client(t_dlist * client_node)
 		public_msg[public_msg_len] = 0;
 		pthread_mutex_lock(&g_mutex);
 		write(g_log_file_fd, public_msg, public_msg_len);
-		pthread_mutex_unlock(&g_mutex);
 		while ((clients = clients->next) != g_clients && clients)
 			if (clients->content != client)
 			{
@@ -150,6 +149,7 @@ void			handle_client(t_dlist * client_node)
 				if (good_connection(tmp_client->sockfd))
 					send(tmp_client->sockfd, public_msg, public_msg_len + 1, 0);
 			}
+		pthread_mutex_unlock(&g_mutex);
 	}
 	log_client_actions(client, "DISCONNECTED");
 	pthread_mutex_lock(&g_mutex);
