@@ -6,7 +6,7 @@
 /*   By: pgritsen <pgritsen@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2018/07/30 13:18:50 by pgritsen          #+#    #+#             */
-/*   Updated: 2018/08/01 18:03:39 by pgritsen         ###   ########.fr       */
+/*   Updated: 2018/08/01 18:14:06 by pgritsen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -76,21 +76,22 @@ int				init_socket(struct sockaddr_in * conn_data, const char * server_ip)
 	return (ret_fd);
 }
 
-int				try_reconnect(int * sockfd, struct sockaddr_in * conn_data, pthread_t * thread)
+int				try_reconnect(int * sockfd, struct sockaddr_in * conn_data)
 {
-	pthread_kill(*thread, 0);
+	pthread_t	thread;
+
 	if ((*sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
 		return (-1);
 	else if (connect(*sockfd, (struct sockaddr *)conn_data, sizeof(*conn_data)) < 0)
 		return (-1);
 	else if (send_command(*sockfd, RECONNECT, 0) < 0)
 		return (-1);
-	pthread_create(thread, NULL, (void *(*)(void *))(get_messages), (void *)sockfd);
-	pthread_detach(*thread);
+	pthread_create(&thread, NULL, (void *(*)(void *))(get_messages), (void *)sockfd);
+	pthread_detach(thread);
 	return (1);
 }
 
-void			handle_input(int sockfd, char * nickname, struct sockaddr_in * conn_data, pthread_t * thread)
+void			handle_input(int * sockfd, char * nickname, struct sockaddr_in * conn_data)
 {
 	size_t	msg_len;
 	char	* msg;
@@ -99,10 +100,8 @@ void			handle_input(int sockfd, char * nickname, struct sockaddr_in * conn_data,
 
 	sprintf(prompt, "You -> [%s]: ", nickname);
 	free(nickname);
-	while (1)
+	while ((msg = readline(prompt)))
 	{
-		if (!(msg = readline(prompt)))
-			continue ;
 		trash = ft_strtrim(msg);
 		free(msg);
 		msg_len = ft_strlen(trash);
@@ -111,10 +110,10 @@ void			handle_input(int sockfd, char * nickname, struct sockaddr_in * conn_data,
 		msg = ft_strsub(trash, 0, 255);
 		free(trash);
 		if ((msg_len = ft_strlen(msg)) > 0)
-			if (send_data(sockfd, msg, msg_len + 1, 0) < 0)
+			if (send_data(*sockfd, msg, msg_len + 1, 0) < 0)
 			{
 				ft_putendl("* You were diconnected from server, reconnecting... *");
-				while (try_reconnect(&sockfd, conn_data, thread) < 0)
+				while (try_reconnect(sockfd, conn_data) < 0)
 					;
 				ft_putendl("* You were reconnected, enjoy! *");
 			}
@@ -162,7 +161,7 @@ void			get_startup_data(int sockfd, struct sockaddr_in * conn_data)
 	}
 	pthread_create(&thread, NULL, (void *(*)(void *))(get_messages), (void *)&sockfd);
 	pthread_detach(thread);
-	handle_input(sockfd, nickname, conn_data, &thread);
+	handle_input(&sockfd, nickname, conn_data);
 }
 
 int				main(int ac, char **av)
