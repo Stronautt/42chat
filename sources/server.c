@@ -6,7 +6,7 @@
 /*   By: pgritsen <pgritsen@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2018/07/31 17:16:33 by pgritsen          #+#    #+#             */
-/*   Updated: 2018/08/01 18:06:37 by pgritsen         ###   ########.fr       */
+/*   Updated: 2018/08/01 18:26:10 by pgritsen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -174,12 +174,14 @@ void			handle_client(t_dlist * client_node)
 		{
 			if (send_data(client->sockfd, invite_msg, sizeof(invite_msg), 0) < 0)
 				pthread_exit(NULL);
-			get_nickname(client);
 			sync_chat_history(client);
 			log_client_actions(client, "CONNECTED");
 		}
 		else if (cmd == RECONNECT)
+		{
+			get_nickname(client);
 			log_client_actions(client, "RECONNECTED");
+		}
 		else
 			pthread_exit(NULL);
 		trace_income_msgs(client);
@@ -225,6 +227,7 @@ int				main(void)
 		return (ft_printf(server_pid < 0 ? "Server start failed!"
 			: "Server pid -> [%d]\n", server_pid) * 0 + EXIT_FAILURE);
 	setsid();
+	signal(SIGPIPE, SIG_IGN);
 	if ((server_socket = init_socket(&conn_data)) < 0)
 		return (ft_printf("%s\n", get_error()) * 0 + EXIT_FAILURE);
 	handle_connections(server_socket, &conn_data);

@@ -6,7 +6,7 @@
 /*   By: pgritsen <pgritsen@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2018/07/30 13:18:50 by pgritsen          #+#    #+#             */
-/*   Updated: 2018/08/01 18:21:10 by pgritsen         ###   ########.fr       */
+/*   Updated: 2018/08/01 18:25:53 by pgritsen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -76,7 +76,7 @@ int				init_socket(struct sockaddr_in * conn_data, const char * server_ip)
 	return (ret_fd);
 }
 
-int				try_reconnect(int * sockfd, struct sockaddr_in * conn_data)
+int				try_reconnect(int * sockfd, struct sockaddr_in * conn_data, const char * nickname)
 {
 	pthread_t	thread;
 
@@ -85,6 +85,8 @@ int				try_reconnect(int * sockfd, struct sockaddr_in * conn_data)
 	else if (connect(*sockfd, (struct sockaddr *)conn_data, sizeof(*conn_data)) < 0)
 		return (-1);
 	else if (send_command(*sockfd, RECONNECT, 0) < 0)
+		return (-1);
+	else if (send_data(*sockfd, nickname, ft_strlen(nickname) + 1, 0) < 0)
 		return (-1);
 	pthread_create(&thread, NULL, (void *(*)(void *))(get_messages), (void *)sockfd);
 	pthread_detach(thread);
@@ -99,7 +101,6 @@ void			handle_input(int * sockfd, char * nickname, struct sockaddr_in * conn_dat
 	char	prompt[128];
 
 	sprintf(prompt, "You -> [%s]: ", nickname);
-	free(nickname);
 	while ((msg = readline(prompt)))
 	{
 		trash = ft_strtrim(msg);
@@ -113,7 +114,7 @@ void			handle_input(int * sockfd, char * nickname, struct sockaddr_in * conn_dat
 			if (send_data(*sockfd, msg, msg_len + 1, 0) < 0)
 			{
 				ft_putendl("* You were diconnected from server, reconnecting... *");
-				while (try_reconnect(sockfd, conn_data) < 0)
+				while (try_reconnect(sockfd, conn_data, nickname) < 0)
 					;
 				ft_putendl("* You were reconnected, enjoy! *");
 			}
