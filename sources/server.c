@@ -6,7 +6,7 @@
 /*   By: pgritsen <pgritsen@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2018/07/31 17:16:33 by pgritsen          #+#    #+#             */
-/*   Updated: 2018/08/01 18:29:42 by pgritsen         ###   ########.fr       */
+/*   Updated: 2018/08/01 18:54:30 by pgritsen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -134,6 +134,16 @@ void			get_nickname(t_client * client)
 	ft_memdel((void **)&trimmed);
 }
 
+int				validate_msg(char * msg, ssize_t len)
+{
+	if (!msg || len > 255)
+		return (-1);
+	while (len-- > 1)
+		if (!ft_isprint(*msg++))
+			*(msg - 1) = '*';
+	return (1);
+}
+
 void			trace_income_msgs(t_client * client)
 {
 	ssize_t		msg_l;
@@ -142,9 +152,10 @@ void			trace_income_msgs(t_client * client)
 	char		* public_msg;
 	t_dlist		* clients = g_clients;
 
-	while (good_connection(client->sockfd) &&
-		(msg_l = recieve_data(client->sockfd, (void **)&msg, MSG_WAITALL)) > 0)
+	while ((msg_l = recieve_data(client->sockfd, (void **)&msg, MSG_WAITALL)) > 0)
 	{
+		if (validate_msg(msg, msg_l) < 0)
+			continue ;
 		if (!(public_msg = ft_strnew(msg_l + ft_strlen(client->nickname) + 16)))
 			pthread_exit(NULL);
 		msg[msg_l] = 0;
