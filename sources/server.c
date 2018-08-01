@@ -6,7 +6,7 @@
 /*   By: pgritsen <pgritsen@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2018/07/31 17:16:33 by pgritsen          #+#    #+#             */
-/*   Updated: 2018/08/01 18:26:10 by pgritsen         ###   ########.fr       */
+/*   Updated: 2018/08/01 18:29:42 by pgritsen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -174,6 +174,7 @@ void			handle_client(t_dlist * client_node)
 		{
 			if (send_data(client->sockfd, invite_msg, sizeof(invite_msg), 0) < 0)
 				pthread_exit(NULL);
+			get_nickname(client);
 			sync_chat_history(client);
 			log_client_actions(client, "CONNECTED");
 		}
