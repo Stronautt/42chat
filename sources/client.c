@@ -6,7 +6,7 @@
 /*   By: pgritsen <pgritsen@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2018/07/30 13:18:50 by pgritsen          #+#    #+#             */
-/*   Updated: 2018/08/01 17:42:27 by pgritsen         ###   ########.fr       */
+/*   Updated: 2018/08/01 17:54:13 by pgritsen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -78,7 +78,7 @@ int				init_socket(struct sockaddr_in * conn_data, const char * server_ip)
 
 int				try_reconnect(int * sockfd, struct sockaddr_in * conn_data, pthread_t * thread)
 {
-	pthread_cancel(*thread);
+	pthread_kill(*thread, 0);
 	if ((*sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
 		return (-1);
 	else if (connect(*sockfd, (struct sockaddr *)conn_data, sizeof(*conn_data)) < 0)
