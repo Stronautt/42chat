@@ -6,7 +6,7 @@
 /*   By: pgritsen <pgritsen@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2018/07/31 17:16:33 by pgritsen          #+#    #+#             */
-/*   Updated: 2018/07/31 18:21:01 by pgritsen         ###   ########.fr       */
+/*   Updated: 2018/08/01 13:06:57 by pgritsen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -131,10 +131,10 @@ void			handle_client(t_dlist * client_node)
 		return ;
 	}
 	send(client->sockfd, invite_msg, sizeof(invite_msg), 0);
-	recv(client->sockfd, client->nickname, 32, 0);
+	recv(client->sockfd, client->nickname, 32, MSG_WAITALL);
 	sync_chat_history(client);
 	log_client_actions(client, "CONNECTED");
-	while (good_connection(client->sockfd) && (msg_len = recv(client->sockfd, msg, sizeof(msg), 0)) > 0)
+	while (good_connection(client->sockfd) && (msg_len = recv(client->sockfd, msg, sizeof(msg), MSG_WAITALL)) > 0)
 	{
 		msg[msg_len] = 0;
 		public_msg_len = sprintf(public_msg, "[%s]: %s\n", client->nickname, msg);

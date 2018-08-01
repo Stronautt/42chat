@@ -6,7 +6,7 @@
 /*   By: pgritsen <pgritsen@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2018/07/30 13:18:50 by pgritsen          #+#    #+#             */
-/*   Updated: 2018/07/31 20:24:47 by pgritsen         ###   ########.fr       */
+/*   Updated: 2018/08/01 13:10:28 by pgritsen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -37,7 +37,7 @@ void			get_messages(int * sockfd)
 {
 	char			buffer[320];
 
-	while (recv(*sockfd, buffer, sizeof(buffer), 0) > 0)
+	while (recv(*sockfd, buffer, sizeof(buffer), MSG_WAITALL) > 0)
 	{
 		clear_prompt();
 		ft_putstr(buffer);
@@ -102,7 +102,7 @@ void			get_startup_data(int sockfd)
 	char		* trash;
 	pthread_t	thread;
 
-	recv(sockfd, buffer, 32, 0);
+	recv(sockfd, buffer, 32, MSG_WAITALL);
 	ft_putendl(buffer);
 	do
 	{
@@ -116,7 +116,7 @@ void			get_startup_data(int sockfd)
 	}
 	while (ft_strlen(nickname) <= 0);
 	send(sockfd, nickname, 32, 0);
-	while (recv(sockfd, buffer, sizeof(buffer), 0) > 0)
+	while (recv(sockfd, buffer, sizeof(buffer), MSG_WAITALL) > 0)
 		if (!*buffer)
 			break ;
 		else
