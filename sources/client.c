@@ -6,7 +6,7 @@
 /*   By: pgritsen <pgritsen@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2018/07/30 13:18:50 by pgritsen          #+#    #+#             */
-/*   Updated: 2018/08/01 17:54:13 by pgritsen         ###   ########.fr       */
+/*   Updated: 2018/08/01 18:03:39 by pgritsen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -99,8 +99,10 @@ void			handle_input(int sockfd, char * nickname, struct sockaddr_in * conn_data,
 
 	sprintf(prompt, "You -> [%s]: ", nickname);
 	free(nickname);
-	while ((msg = readline(prompt)))
+	while (1)
 	{
+		if (!(msg = readline(prompt)))
+			continue ;
 		trash = ft_strtrim(msg);
 		free(msg);
 		msg_len = ft_strlen(trash);

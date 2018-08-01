@@ -6,7 +6,7 @@
 /*   By: pgritsen <pgritsen@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2018/07/31 17:16:33 by pgritsen          #+#    #+#             */
-/*   Updated: 2018/08/01 17:28:18 by pgritsen         ###   ########.fr       */
+/*   Updated: 2018/08/01 18:06:37 by pgritsen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -152,7 +152,7 @@ void			trace_income_msgs(t_client * client)
 		ft_memdel((void **)&msg);
 		pthread_mutex_lock(&g_mutex);
 		public_msg[public_msg_l] = 0;
-		write(g_log_file_fd, public_msg, public_msg_l);
+		msg_l = write(g_log_file_fd, public_msg, public_msg_l);
 		while ((clients = clients->next) != g_clients && clients)
 			if (clients->content != client)
 				send_data(((t_client *)(clients->content))->sockfd,
