@@ -6,7 +6,7 @@
 /*   By: pgritsen <pgritsen@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2018/07/30 13:18:50 by pgritsen          #+#    #+#             */
-/*   Updated: 2018/08/01 18:14:06 by pgritsen         ###   ########.fr       */
+/*   Updated: 2018/08/01 18:21:10 by pgritsen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -173,6 +173,7 @@ int				main(int ac, char **av)
 		return (ft_printf("Usage: ./42chat [server_ip_address]\n") * 0 + EXIT_FAILURE);
 	else if ((sockfd = init_socket(&conn_data, av[1])) < 0)
 		return (ft_printf("%s\n", get_error()) * 0 + EXIT_FAILURE);
+	signal(SIGPIPE, SIG_IGN);
 	get_startup_data(sockfd, &conn_data);
 	return (0);
 }
