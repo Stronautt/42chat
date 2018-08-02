@@ -90,7 +90,7 @@ void	sync_chat_history(t_client * client)
 	send_data(client->sockfd, "", 1, 0);
 }
 
-void			log_client_actions(t_client * client, const char * status)
+void			log_client_actions(t_client * client, const char * status, const char * public_status)
 {
 	time_t		timer;
 	char		buffer[32];
@@ -103,7 +103,7 @@ void			log_client_actions(t_client * client, const char * status)
 	strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S", tm_info);
 	pthread_mutex_lock(&g_mutex);
 	dprintf(g_log_sys_file_fd, "[%s][%s] -> %s\n", buffer, client->nickname, status);
-	sprintf(msg, "[%s] -> %s\n", client->nickname, status);
+	sprintf(msg, "* %s %s the chat *\n", client->nickname, public_status);
 	dprintf(g_log_file_fd, "%s", msg);
 	while ((clients = clients->next) != g_clients && clients)
 		if (clients->content != client)
@@ -187,17 +187,17 @@ void			handle_client(t_dlist * client_node)
 				pthread_exit(NULL);
 			get_nickname(client);
 			sync_chat_history(client);
-			log_client_actions(client, "CONNECTED");
+			log_client_actions(client, "CONNECTED", "joined");
 		}
 		else if (cmd == RECONNECT)
 		{
 			get_nickname(client);
-			log_client_actions(client, "RECONNECTED");
+			log_client_actions(client, "RECONNECTED", "return to");
 		}
 		else
 			pthread_exit(NULL);
 		trace_income_msgs(client);
-		log_client_actions(client, "DISCONNECTED");
+		log_client_actions(client, "DISCONNECTED", "left");
 	}
 	pthread_mutex_lock(&g_mutex);
 	ft_dlstdelelem(&client_node);
