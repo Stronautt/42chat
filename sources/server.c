@@ -105,7 +105,7 @@ void			log_client_actions(t_client * client, const char * status, const char * p
 	dprintf(g_log_sys_file_fd, "[%s][%s] -> %s\n", buffer, client->nickname, status);
 	sprintf(msg, "* %s %s the chat *\n", client->nickname, public_status);
 	dprintf(g_log_file_fd, "%s", msg);
-	while ((clients = clients->next) != g_clients && clients)
+	while (clients && (clients = clients->next) != g_clients)
 		if (clients->content != client)
 		{
 			t_client	*tmp_client = clients->content;
@@ -164,7 +164,7 @@ void			trace_income_msgs(t_client * client)
 		pthread_mutex_lock(&g_mutex);
 		public_msg[public_msg_l] = 0;
 		msg_l = write(g_log_file_fd, public_msg, public_msg_l);
-		while ((clients = clients->next) != g_clients && clients)
+		while (clients && (clients = clients->next) != g_clients)
 			if (clients->content != client)
 				send_data(((t_client *)(clients->content))->sockfd,
 							public_msg, public_msg_l + 1, 0);
@@ -196,6 +196,9 @@ void			handle_client(t_dlist * client_node)
 		}
 		else
 			pthread_exit(NULL);
+		pthread_mutex_lock(&g_mutex);
+		ft_dlstpush(&g_clients, client_node);
+		pthread_mutex_unlock(&g_mutex);
 		trace_income_msgs(client);
 		log_client_actions(client, "DISCONNECTED", "left");
 	}
@@ -223,7 +226,6 @@ void			handle_connections(int server, struct sockaddr_in * conn_data)
 			continue ;
 		new_client->sockfd = new_conn;
 		new_node = ft_dlstnew(new_client, sizeof(t_client));
-		ft_dlstpush(&g_clients, new_node);
 		pthread_create(&thread, NULL, (void *(*)(void *))(handle_client), (void *)new_node);
 		pthread_detach(thread);
 	}
@@ -236,9 +238,10 @@ int				main(void)
 	pid_t				server_pid = fork();
 
 	if (server_pid)
-		return (ft_printf(server_pid < 0 ? "Server start failed!"
-			: "Server pid -> [%d]\n", server_pid) * 0 + EXIT_FAILURE);
-	setsid();
+		return (server_pid < 0 ?
+			ft_printf("Server start failed!\n") * 0 + EXIT_FAILURE :
+			ft_printf("Server pid -> [%d]\n", server_pid) * 0);
+			setsid();
 	signal(SIGPIPE, SIG_IGN);
 	if ((server_socket = init_socket(&conn_data)) < 0)
 		return (ft_printf("%s\n", get_error()) * 0 + EXIT_FAILURE);
