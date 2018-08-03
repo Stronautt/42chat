@@ -3,14 +3,15 @@
 /*                                                        :::      ::::::::   */
 /*   server.c                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: pgritsen <pgritsen@student.42.fr>          +#+  +:+       +#+        */
+/*   By: phrytsenko <phrytsenko@student.42.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2018/07/31 17:16:33 by pgritsen          #+#    #+#             */
-/*   Updated: 2018/08/01 18:54:30 by pgritsen         ###   ########.fr       */
+/*   Updated: 2018/08/03 17:55:52 by phrytsenko       ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "node.h"
+#include "server.h"
 
 # define LOG_FILE_PATH "./log_chat.txt"
 # define LOG_SYS_FILE_PATH "./log_sys.txt"
@@ -146,11 +147,58 @@ int				validate_msg(char * msg, ssize_t len)
 	return (1);
 }
 
-uint8_t			treated_as_command(const char * msg, ssize_t msg_l)
+size_t			splitted_size(char ** parts)
 {
-    char	**parts;
+	size_t	size = 0;
 
-    parts = ft_strsplit(msg, ' ');
+	if (!parts)
+		return (0);
+	while (parts[size])
+		size++;
+	return (size);
+}
+
+void			free_splitted(char ** parts)
+{
+	char	** s_p = parts;
+
+	if (!parts)
+		return ;
+	while (*parts)
+		free(*parts++);
+	free(s_p);
+}
+
+uint8_t			treated_as_command(char * msg, ssize_t msg_l, t_client * client)
+{
+	char	**parts;
+	char	buf[1024];
+	ssize_t	len;
+	uint8_t	found = 0;
+	static const t_assocc cmds[] = {
+		{"help", &show_help}
+	};
+
+	if (!msg || msg_l <= 2 || msg[0] != '/')
+		return (0);
+	else if (!(parts = ft_strsplit(msg, ' ')))
+		return (0);
+	else if (!parts[0])
+	{
+		free_splitted(parts);
+		return (0);
+	}
+	free(msg);
+	for (size_t i = 0; i < sizeof(cmds) / sizeof(t_assocc); i++)
+		if (!strcasecmp(cmds[i].key, parts[0] + 1) && ++found)
+			cmds[i].func(client, parts[1]);
+	if (!found)
+	{
+		len = sprintf(buf, "Unknown command: [%s]\n", parts[0] + 1);
+		send_data(client->sockfd, buf, len + 1, 0);
+	}
+	free_splitted(parts);
+	return (1);
 }
 
 void			trace_income_msgs(t_client * client)
@@ -164,8 +212,11 @@ void			trace_income_msgs(t_client * client)
 	while ((msg_l = recieve_data(client->sockfd, (void **)&msg, MSG_WAITALL)) > 0)
 	{
 		if (validate_msg(msg, msg_l) < 0)
+		{
+			ft_memdel((void **)&msg);
 			continue ;
-		else if (treated_as_command(msg, msg_l))
+		}
+		else if (treated_as_command(msg, msg_l, client))
 			continue ;
 		else if (!(public_msg = ft_strnew(msg_l + ft_strlen(client->nickname) + 16)))
 			pthread_exit(NULL);

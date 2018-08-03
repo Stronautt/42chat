@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   node.h                                             :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: pgritsen <pgritsen@student.42.fr>          +#+  +:+       +#+        */
+/*   By: phrytsenko <phrytsenko@student.42.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2018/07/30 17:43:46 by pgritsen          #+#    #+#             */
-/*   Updated: 2018/08/01 17:06:06 by pgritsen         ###   ########.fr       */
+/*   Updated: 2018/08/03 17:42:37 by phrytsenko       ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -65,5 +65,12 @@ ssize_t			recieve_command(int sockfd, t_command * data, int flags);
 */
 
 int				nickname_is_valid(const char * nickname);
+
+/*
+**				Commands.c
+**				↓↓↓↓↓↓↓↓↓↓
+*/
+
+void			show_help(t_client * client);
 
 #endif

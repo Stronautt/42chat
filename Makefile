@@ -3,10 +3,10 @@
 #                                                         :::      ::::::::    #
 #    Makefile                                           :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: pgritsen <pgritsen@student.42.fr>          +#+  +:+       +#+         #
+#    By: phrytsenko <phrytsenko@student.42.fr>      +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2017/12/10 17:05:19 by pgritsen          #+#    #+#              #
-#    Updated: 2018/08/01 15:49:52 by pgritsen         ###   ########.fr        #
+#    Updated: 2018/08/03 17:46:45 by phrytsenko       ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -21,11 +21,11 @@ CFLAGS		+=	-O2 -flto=thin -fdata-sections -ffunction-sections
 
 HDRSDIR		=	./includes
 
-HDRS		=	$(addprefix $(HDRSDIR)/, node.h)
+HDRS		=	$(addprefix $(HDRSDIR)/, node.h server.h)
 
 SRCSDIR		=	./sources
 
-SRCS_1		=	server.c data_exchange.c data_validation.c
+SRCS_1		=	server.c data_exchange.c data_validation.c commands.c
 SRCS_2		=	client.c data_exchange.c data_validation.c
 
 OBJDIR		=	./obj
