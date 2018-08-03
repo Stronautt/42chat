@@ -84,6 +84,8 @@ void	sync_chat_history(t_client * client)
 		}
 		if (buf_len < 0)
 			send_data(client->sockfd, "* Unable to load history *\n", 28, 0);
+		buf_len = sprintf(buffer, "Online users: %zu\n", ft_dlstsize(g_clients));
+		send_data(client->sockfd, buffer, buf_len + 1, 0);
 	}
 	else
 		send_data(client->sockfd, "* Unable to load history *\n", 28, 0);
@@ -144,6 +146,13 @@ int				validate_msg(char * msg, ssize_t len)
 	return (1);
 }
 
+uint8_t			treated_as_command(const char * msg, ssize_t msg_l)
+{
+    char	**parts;
+
+    parts = ft_strsplit(msg, ' ');
+}
+
 void			trace_income_msgs(t_client * client)
 {
 	ssize_t		msg_l;
@@ -156,7 +165,9 @@ void			trace_income_msgs(t_client * client)
 	{
 		if (validate_msg(msg, msg_l) < 0)
 			continue ;
-		if (!(public_msg = ft_strnew(msg_l + ft_strlen(client->nickname) + 16)))
+		else if (treated_as_command(msg, msg_l))
+			continue ;
+		else if (!(public_msg = ft_strnew(msg_l + ft_strlen(client->nickname) + 16)))
 			pthread_exit(NULL);
 		msg[msg_l] = 0;
 		public_msg_l = sprintf(public_msg, "[%s]: %s\n", client->nickname, msg);
