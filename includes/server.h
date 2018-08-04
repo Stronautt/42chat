@@ -42,7 +42,14 @@ extern t_dlist			* g_clients;
 extern t_dlist			* g_chat_rooms;
 extern pthread_mutex_t	g_mutex;
 
+/*
+**				Server.c
+**				↓↓↓↓↓↓↓↓
+*/
+
 int				new_chat_room(char * name, char * passwd);
+
+void			sync_chat_history(t_client * client);
 
 /*
 **				Commands.c

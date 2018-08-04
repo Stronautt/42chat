@@ -192,4 +192,5 @@ void	join_chat_room(t_client * client, char ** args)
 	pthread_mutex_unlock(&g_mutex);
 	msg = "* You successfully entered room *\n";
 	send_data(client->sockfd, msg, ft_strlen(msg) + 1, 0);
+	sync_chat_history(client);
 }

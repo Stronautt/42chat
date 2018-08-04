@@ -111,8 +111,6 @@ void	sync_chat_history(t_client * client)
 		}
 		if (buf_len < 0)
 			send_data(client->sockfd, "* Unable to load history *\n", 28, 0);
-		buf_len = sprintf(buffer, "Online users: %zu\n", ft_dlstsize(g_clients));
-		send_data(client->sockfd, buffer, buf_len + 1, 0);
 	}
 	else
 		send_data(client->sockfd, "* Unable to load history *\n", 28, 0);
@@ -231,10 +229,11 @@ void			trace_income_msgs(t_client * client)
 	char		* msg;
 	char		* public_msg;
 	t_dlist		* clients = g_clients;
-	t_chat_room	* chat_room = client->chat_room_node->content;
 
 	while ((msg_l = recieve_data(client->sockfd, (void **)&msg, MSG_WAITALL)) > 0)
 	{
+		t_chat_room	* chat_room = client->chat_room_node->content;
+
 		if (validate_msg(msg, msg_l) < 0)
 		{
 			ft_memdel((void **)&msg);
@@ -312,6 +311,8 @@ void			*handle_client(t_dlist * client_node)
 		ft_dlstpush(&g_clients, client_node);
 		pthread_mutex_unlock(&g_mutex);
 		log_client_actions(client, sys_act, public_act);
+		show_users_in_room(client);
+		show_help(client);
 		trace_income_msgs(client);
 	}
 	pthread_cleanup_pop(1);
