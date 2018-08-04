@@ -47,6 +47,8 @@ extern pthread_mutex_t	g_mutex;
 **				↓↓↓↓↓↓↓↓
 */
 
+void			log_client_actions(t_client * client, const char * status, const char * public_status);
+
 int				new_chat_room(char * name, char * passwd);
 
 void			sync_chat_history(t_client * client);

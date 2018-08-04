@@ -131,7 +131,7 @@ void			log_client_actions(t_client * client, const char * status, const char * p
 	strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S", tm_info);
 	pthread_mutex_lock(&g_mutex);
 	dprintf(g_log_sys_fd, "[%s][%s] -> %s\n", buffer, client->nickname, status);
-	sprintf(msg, "* %s %s the chat *\n", client->nickname, public_status);
+	sprintf(msg, "* %s %s *\n", client->nickname, public_status);
 	dprintf(chat_room->log_fd, "%s", msg);
 	while (clients && (clients = clients->next) != g_clients)
 		if (clients->content && clients->content != client && ((t_client *)clients->content)->chat_room_node == client->chat_room_node)
@@ -262,9 +262,10 @@ void			disconnect_client(t_dlist * client_node)
 	t_client	* client = client_node->content;
 
 	if (nickname_is_valid(client->nickname))
-		log_client_actions(client, "DISCONNECTED", "left");
+		log_client_actions(client, "DISCONNECTED", "left the chat");
 	pthread_mutex_lock(&g_mutex);
 	close(client->sockfd);
+	ft_dlstdelelem(&client->node_in_room);
 	ft_dlstdelelem(&client_node);
 	pthread_mutex_unlock(&g_mutex);
 }
@@ -289,13 +290,13 @@ void			*handle_client(t_dlist * client_node)
 			get_nickname(client);
 			sync_chat_history(client);
 			sys_act = "CONNECTED";
-			public_act = "joined";
+			public_act = "joined the chat";
 		}
 		else if (cmd == RECONNECT)
 		{
 			get_nickname(client);
 			sys_act = "RECONNECTED";
-			public_act = "returned to";
+			public_act = "returned to the chat";
 		}
 		else
 			pthread_exit(NULL);
