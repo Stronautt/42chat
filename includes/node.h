@@ -20,6 +20,9 @@
 # include <stdio.h>
 # include <sys/socket.h>
 # include <sys/ioctl.h>
+# include <sys/types.h>
+# include <sys/wait.h>
+# include <sys/ptrace.h>
 # include <stdlib.h>
 # include <netinet/in.h>
 # include <arpa/inet.h>
@@ -35,12 +38,6 @@ typedef enum	e_command
 {
 	CONNECT = 1, RECONNECT
 }				t_command;
-
-typedef struct	s_client
-{
-	int		sockfd;
-	char	nickname[32];
-}				t_client;
 
 /*
 **				Data_exchange.c
@@ -66,11 +63,8 @@ ssize_t			recieve_command(int sockfd, t_command * data, int flags);
 
 int				nickname_is_valid(const char * nickname);
 
-/*
-**				Commands.c
-**				↓↓↓↓↓↓↓↓↓↓
-*/
+size_t			splitted_size(char ** parts);
 
-void			show_help(t_client * client);
+void			free_splitted(char ** parts);
 
 #endif

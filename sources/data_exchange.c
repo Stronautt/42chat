@@ -30,6 +30,8 @@ uint64_t	hash_data(const void * data, size_t size)
 	unsigned char	* tmp = (unsigned char *)data;
 	int				c;
 
+	if (!data)
+		return (0);
 	while (size--)
 	{
 		c = *tmp++;

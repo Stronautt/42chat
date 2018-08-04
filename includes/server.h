@@ -19,4 +19,46 @@ typedef struct	s_assocc
 	void (*func)();
 }				t_assocc;
 
+typedef struct	s_client
+{
+	int			sockfd;
+	uint8_t		silent_mode;
+	pthread_t	thread_data;
+	char		nickname[32];
+	t_dlist		* chat_room_node;
+	t_dlist		* node_in_room;
+}				t_client;
+
+typedef struct	s_chat_room
+{
+	char		* name;
+	t_dlist		* users;
+	int			log_fd;
+	char		log_name[64];
+	uint64_t	passwd;
+}				t_chat_room;
+
+extern t_dlist			* g_clients;
+extern t_dlist			* g_chat_rooms;
+extern pthread_mutex_t	g_mutex;
+
+int				new_chat_room(char * name, char * passwd);
+
+/*
+**				Commands.c
+**				↓↓↓↓↓↓↓↓↓↓
+*/
+
+void			show_help(t_client * client);
+
+void			toogle_silent_mode(t_client * client);
+
+void			show_all_rooms(t_client * client);
+
+void			show_users_in_room(t_client * client);
+
+void			create_chat_room(t_client * client, char ** args);
+
+void			join_chat_room(t_client * client, char ** args);
+
 #endif
