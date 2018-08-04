@@ -184,6 +184,7 @@ void	join_chat_room(t_client * client, char ** args)
 	else if (!(tmp = malloc(sizeof(t_client))))
 		return ;
 	ft_memcpy(tmp, client, sizeof(t_client));
+	log_client_actions(client, "LEFT_ROOM", "left the room");
 	pthread_mutex_lock(&g_mutex);
 	ft_dlstdelelem(&client->node_in_room);
 	client->node_in_room = ft_dlstnew(tmp, sizeof(void *));
