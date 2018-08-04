@@ -294,7 +294,7 @@ void			handle_connections(int server, struct sockaddr_in * conn_data)
 		new_client->sockfd = new_conn;
 		new_node = ft_dlstnew(new_client, sizeof(t_client));
 		pthread_create(&thread, NULL, (void *(*)(void *))(handle_client), (void *)new_node);
-		pthread_cleanup_push(disconnect_client, client_node);
+		pthread_cleanup_push(disconnect_client, new_node);
 		pthread_detach(thread);
 	}
 }
