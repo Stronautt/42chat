@@ -238,6 +238,7 @@ void			trace_income_msgs(t_client * client)
 void			disconnect_client(t_dlist * client_node)
 {
 	(void)client_node;
+	ft_printf("Hello From Handler!\n");
 }
 
 void			handle_client(t_dlist * client_node)
@@ -246,6 +247,7 @@ void			handle_client(t_dlist * client_node)
 	char		invite_msg[] = "Welcome to 42Chat!\n";
 	t_client	* client = client_node->content;
 
+	pthread_cleanup_push((void (*)(void *))&disconnect_client, new_node);
 	if (recieve_command(client->sockfd, &cmd, MSG_WAITALL) > 0)
 	{
 		if (cmd == CONNECT)
@@ -269,6 +271,8 @@ void			handle_client(t_dlist * client_node)
 		trace_income_msgs(client);
 		log_client_actions(client, "DISCONNECTED", "left");
 	}
+	pthread_cleanup_pop(1);
+	ft_printf("Hello at the end!\n");
 	pthread_mutex_lock(&g_mutex);
 	ft_dlstdelelem(&client_node);
 	pthread_mutex_unlock(&g_mutex);
@@ -294,7 +298,6 @@ void			handle_connections(int server, struct sockaddr_in * conn_data)
 		new_client->sockfd = new_conn;
 		new_node = ft_dlstnew(new_client, sizeof(t_client));
 		pthread_create(&thread, NULL, (void *(*)(void *))(handle_client), (void *)new_node);
-		pthread_cleanup_push((void (*)(void *))&disconnect_client, (void *)new_node);
 		pthread_detach(thread);
 	}
 }
