@@ -191,7 +191,7 @@ void	join_chat_room(t_client * client, char ** args)
 	client->chat_room_node = rooms;
 	ft_dlstpush(&((t_chat_room *)rooms->content)->users, client->node_in_room);
 	pthread_mutex_unlock(&g_mutex);
-	msg = "* You successfully entered room *\n";
+	msg = "* You successfully entered the room *\n";
 	send_data(client->sockfd, msg, ft_strlen(msg) + 1, 0);
 	sync_chat_history(client);
 	log_client_actions(client, "ENTERED_ROOM", "entered the room");

@@ -123,8 +123,8 @@ void			log_client_actions(t_client * client, const char * status, const char * p
 	char		buffer[32];
 	time_t		timer;
 	struct tm	* tm_info;
-	t_dlist		* clients = g_clients;
 	t_chat_room	* chat_room = client->chat_room_node->content;
+	t_dlist		* clients = chat_room->users;
 
 	time(&timer);
 	tm_info = localtime(&timer);
@@ -133,8 +133,8 @@ void			log_client_actions(t_client * client, const char * status, const char * p
 	dprintf(g_log_sys_fd, "[%s][%s] -> %s\n", buffer, client->nickname, status);
 	sprintf(msg, "* %s %s *\n", client->nickname, public_status);
 	dprintf(chat_room->log_fd, "%s", msg);
-	while (clients && (clients = clients->next) != g_clients)
-		if (clients->content && clients->content != client && ((t_client *)clients->content)->chat_room_node == client->chat_room_node)
+	while (clients && (clients = clients->next) != chat_room->users)
+			if (clients->content && clients != client->node_in_room)
 			send_data(((t_client *)clients->content)->sockfd, msg, ft_strlen(msg) + 1, 0);
 	pthread_mutex_unlock(&g_mutex);
 }
@@ -164,7 +164,7 @@ int				validate_msg(char * msg, ssize_t len)
 	if (!msg || len < 1 || len > 255)
 		return (-1);
 	while (len-- > 1)
-		if (!ft_isprint(*msg++))
+		if (*msg++ >= 0 && !ft_isprint(*(msg - 1)))
 			*(msg - 1) = '*';
 	return (1);
 }
@@ -208,18 +208,22 @@ uint8_t			treated_as_command(char * msg, ssize_t msg_l, t_client * client)
 
 void			send_msg(t_client * client, char * msg, ssize_t msg_l)
 {
+	ssize_t		ret;
+
 	if (!client || !msg)
 		return ;
 	else if (!client->silent_mode)
 	{
 		char	* trash;
 
-		trash = ft_strjoin(msg, "\a");
-		send_data(client->sockfd, trash, msg_l + 2, 0);
+		if (!(trash = ft_strjoin(msg, "\a")))
+			return ;
+		ret = send_data(client->sockfd, trash, msg_l + 2, 0);
 		free(trash);
 	}
 	else
-		send_data(client->sockfd, msg, msg_l + 1, 0);
+		ret = send_data(client->sockfd, msg, msg_l + 1, 0);
+	ret < 0 ? pthread_cancel(client->thread_data) : 0;
 }
 
 void			trace_income_msgs(t_client * client)
@@ -228,11 +232,11 @@ void			trace_income_msgs(t_client * client)
 	ssize_t		public_msg_l;
 	char		* msg;
 	char		* public_msg;
-	t_dlist		* clients = g_clients;
 
 	while ((msg_l = recieve_data(client->sockfd, (void **)&msg, MSG_WAITALL)) > 0)
 	{
 		t_chat_room	* chat_room = client->chat_room_node->content;
+		t_dlist		* clients = chat_room->users;
 
 		if (validate_msg(msg, msg_l) < 0)
 		{
@@ -249,8 +253,8 @@ void			trace_income_msgs(t_client * client)
 		public_msg[public_msg_l] = 0;
 		pthread_mutex_lock(&g_mutex);
 		msg_l = write(chat_room->log_fd, public_msg, public_msg_l);
-		while (clients && (clients = clients->next) != g_clients)
-			if (clients->content && clients->content != client && ((t_client *)clients->content)->chat_room_node == client->chat_room_node)
+		while (clients && (clients = clients->next) != chat_room->users)
+			if (clients->content && clients != client->node_in_room)
 				send_msg(clients->content, public_msg, public_msg_l);
 		pthread_mutex_unlock(&g_mutex);
 		ft_memdel((void **)&public_msg);
