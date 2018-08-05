@@ -15,7 +15,7 @@ NAME_2		=	42chat
 
 CC			=	gcc
 
-CFLAGS		=	-g3 -g
+CFLAGS		=	-g3
 CFLAGS		+=	-Wextra -Werror -Wall
 CFLAGS		+=	-O2 -flto=thin -fdata-sections -ffunction-sections
 

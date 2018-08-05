@@ -19,7 +19,7 @@ OS			=	$(shell uname)
 ifeq ($(OS), Linux)
 	CFLAGS		=	-Wextra -Wall -O3 -g3
 else
-	CFLAGS		=	-Wextra -Werror -Wall -O3 -flto=thin -g3
+	CFLAGS		=	-Wextra -Werror -Wall -O3 -g3
 endif
 
 SRCS		= 	ft_lstnew.c ft_strcat.c ft_strncpy.c ft_memalloc.c ft_strchr.c		\
