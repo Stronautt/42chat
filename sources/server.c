@@ -374,13 +374,67 @@ int				new_chat_room(char * name, char * passwd)
 	return (0);
 }
 
+/*
+*	SIGHUP		1	Hangup (POSIX)
+*	SIGINT		2	Terminal interrupt (ANSI)
+*	SIGQUIT		3	Terminal quit (POSIX)
+*	SIGILL		4	Illegal instruction (ANSI)
+*	SIGTRAP		5	Trace trap (POSIX)
+*	SIGIOT		6	IOT Trap (4.2 BSD)
+*	SIGBUS		7	BUS error (4.2 BSD)
+*	SIGFPE		8	Floating point exception (ANSI)
+*	SIGKILL		9	Kill(can't be caught or ignored) (POSIX)
+*	SIGUSR1		10	User defined signal 1 (POSIX)
+*	SIGSEGV		11	Invalid memory segment access (ANSI)
+*	SIGUSR2		12	User defined signal 2 (POSIX)
+*	SIGPIPE		13	Write on a pipe with no reader, Broken pipe (POSIX)
+*	SIGALRM		14	Alarm clock (POSIX)
+*	SIGTERM		15	Termination (ANSI)
+*	SIGSTKFLT	16	Stack fault
+*	SIGCHLD		17	Child process has stopped or exited, changed (POSIX)
+*	SIGCONT		18	Continue executing, if stopped (POSIX)
+*	SIGSTOP		19	Stop executing(can't be caught or ignored) (POSIX)
+*	SIGTSTP		20	Terminal stop signal (POSIX)
+*	SIGTTIN		21	Background process trying to read, from TTY (POSIX)
+*	SIGTTOU		22	Background process trying to write, to TTY (POSIX)
+*	SIGURG		23	Urgent condition on socket (4.2 BSD)
+*	SIGXCPU		24	CPU limit exceeded (4.2 BSD)
+*	SIGXFSZ		25	File size limit exceeded (4.2 BSD)
+*	SIGVTALRM	26	Virtual alarm clock (4.2 BSD)
+*	SIGPROF		27	Profiling alarm clock (4.2 BSD)
+*	SIGWINCH	28	Window size change (4.3 BSD, Sun)
+*	SIGIO		29	I/O now possible (4.2 BSD)
+*	SIGPWR		30	Power failure restart (System V)
+*/
+
 void			sig_handler(int sig)
 {
 	char	err_msg[256];
+	int		critical = 0;
+	int		is_critical[] = {
+		0, 0, 1, 1, 1, 1, 1,
+		1, 1, 0, 1, 0, 0, 0,
+		1, 1, 1, 0, 1, 1, 0,
+		0, 1, 1, 1, 0, 0, 0,
+		0, 0
+	};
+	char	*signames[] = {
+		"SIGHUP", "SIGINT", "SIGQUIT", "SIGILL", "SIGTRAP", "SIGIOT", "SIGBUS",
+		"SIGFPE", "SIGKILL", "SIGUSR1", "SIGSEGV", "SIGUSR2", "SIGPIPE", "SIGALRM",
+		"SIGTERM", "SIGSTKFLT", "SIGCHLD", "SIGCONT", "SIGSTOP", "SIGTSTP", "SIGTTIN",
+		"SIGTTOU", "SIGURG", "SIGXCPU", "SIGXFSZ", "SIGVTALRM", "SIGPROF", "SIGWINCH",
+		"SIGIO", "SIGPWR"
+	};
 
-	sprintf(err_msg, "[signal: %d]", sig);
+	if (sig >= 0 && sig < (int)(sizeof(signames) / sizeof(*signames)))
+	{
+		critical = is_critical[sig];
+		sprintf(err_msg, "[signal: %d -> %s]", sig, signames[sig]);
+	}
+	else
+		sprintf(err_msg, "[signal: %d -> Unknown]", sig);
 	log_errors(g_log_err_fd, err_msg);
-	exit(sig);
+	critical ? exit(sig) : 0;
 }
 
 int				main(void)
@@ -388,17 +442,15 @@ int				main(void)
 	struct sockaddr_in	conn_data;
 	int					server_socket;
 	pid_t				server_pid = fork();
+	short int			sig = 0;
 
 	if (server_pid)
 		return (server_pid < 0 ?
 			ft_printf("Server start failed!\n") * 0 + EXIT_FAILURE :
 			ft_printf("Server pid -> [%d]\n", server_pid) * 0);
 	setsid();
-	signal(SIGPIPE, SIG_IGN);
-	signal(SIGCHLD, SIG_IGN);
-	signal(SIGHUP, SIG_IGN);
-	signal(SIGSEGV, sig_handler);
-	signal(SIGBUS, sig_handler);
+	while (++sig <= 30)
+		signal(sig, sig_handler);
 	if (new_chat_room("general", 0) < 0)
 		return (EXIT_FAILURE);
 	else if (init_logs() < 0)
