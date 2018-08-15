@@ -72,7 +72,7 @@ ssize_t		recieve_data(int sockfd, void ** data, int flags)
 		return (-1);
 	else if (recv(sockfd, &size, sizeof(size), flags) < 0)
 		return (-1);
-	else if (size > INT16_MAX || !size)
+	else if (size > INT16_MAX || size <= 0)
 		return (-1);
 	else if (recv(sockfd, &recieved_hash, sizeof(recieved_hash), flags) < 0)
 		return (-1);

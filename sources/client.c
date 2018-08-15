@@ -80,6 +80,7 @@ int				try_reconnect(int * sockfd, struct sockaddr_in * conn_data, const char * 
 {
 	pthread_t	thread;
 
+	close(*sockfd);
 	if ((*sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
 		return (-1);
 	else if (connect(*sockfd, (struct sockaddr *)conn_data, sizeof(*conn_data)) < 0)
@@ -110,14 +111,14 @@ void			handle_input(int * sockfd, char * nickname, struct sockaddr_in * conn_dat
 			ft_putendl("* Your message too long, it was trimmed to 255 symbols *");
 		msg = ft_strsub(trash, 0, 255);
 		free(trash);
-		if ((msg_len = ft_strlen(msg)) > 0)
-			if (send_data(*sockfd, msg, msg_len + 1, 0) < 0)
-			{
-				ft_putendl("* You were diconnected from server, reconnecting... *");
-				while (try_reconnect(sockfd, conn_data, nickname) < 0)
-					;
-				ft_putendl("* You were reconnected, enjoy! *");
-			}
+		if ((msg_len = ft_strlen(msg)) > 0
+			&& send_data(*sockfd, msg, msg_len + 1, 0) < 0)
+		{
+			ft_putendl("* You were diconnected from server, reconnecting... *");
+			while (try_reconnect(sockfd, conn_data, nickname) < 0)
+				;
+			ft_putendl("* You were reconnected, enjoy! *");
+		}
 		free(msg);
 	}
 }

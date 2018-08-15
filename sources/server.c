@@ -49,22 +49,24 @@ int				init_logs()
 	return (0);
 }
 
+//	Be careful with this function as it used in signal handle,
+//	see `man -s7 signal` to check if function that you want to
+//	use inside is allowed in handler
+
 int				log_errors(int fd, const char * msg)
 {
 	char		buffer[32];
-	char		* trimmed;
+	char		log[1024];
 	time_t		timer;
 	struct tm	* tm_info;
 	ssize_t		ret = 0;
 
+	if (strlen(msg) + sizeof(buffer) > sizeof(log))
+		return (-1);
 	time(&timer);
 	tm_info = localtime(&timer);
 	strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S", tm_info);
-	trimmed = ft_strtrim(msg);
-	pthread_mutex_lock(&g_mutex);
-	ret = dprintf(fd, "[%s]: %s\n", buffer, trimmed);
-	pthread_mutex_unlock(&g_mutex);
-	free(trimmed);
+	ret = write(fd, log, sprintf(log, "[%s][pid: %d]: %s\n", buffer, getpid(), msg));
 	return (ret);
 }
 
@@ -208,8 +210,6 @@ uint8_t			treated_as_command(char * msg, ssize_t msg_l, t_client * client)
 
 void			send_msg(t_client * client, char * msg, ssize_t msg_l)
 {
-	ssize_t		ret;
-
 	if (!client || !msg)
 		return ;
 	else if (!client->silent_mode)
@@ -218,12 +218,11 @@ void			send_msg(t_client * client, char * msg, ssize_t msg_l)
 
 		if (!(trash = ft_strjoin(msg, "\a")))
 			return ;
-		ret = send_data(client->sockfd, trash, msg_l + 2, 0);
+		send_data(client->sockfd, trash, msg_l + 2, 0);
 		free(trash);
 	}
 	else
-		ret = send_data(client->sockfd, msg, msg_l + 1, 0);
-	ret < 0 ? pthread_cancel(client->thread_data) : 0;
+		send_data(client->sockfd, msg, msg_l + 1, 0);
 }
 
 void			trace_income_msgs(t_client * client)
@@ -304,13 +303,10 @@ void			*handle_client(t_dlist * client_node)
 		}
 		else
 			pthread_exit(NULL);
-		pthread_mutex_lock(&g_mutex);
 		if (!(tmp = malloc(sizeof(t_client))))
-		{
-			pthread_mutex_unlock(&g_mutex);
 			pthread_exit(NULL);
-		}
 		ft_memcpy(tmp, client, sizeof(t_client));
+		pthread_mutex_lock(&g_mutex);
 		client->node_in_room = ft_dlstnew(tmp, sizeof(void *));
 		ft_dlstpush(&((t_chat_room *)client->chat_room_node->content)->users, client->node_in_room);
 		ft_dlstpush(&g_clients, client_node);
@@ -412,24 +408,24 @@ void			sig_handler(int sig)
 	char	err_msg[256];
 	int		critical = 0;
 	int		is_critical[] = {
-		0, 0, 1, 1, 1, 1, 1,
+		0, 1, 1, 1, 1, 1, 1,
 		1, 1, 0, 1, 0, 0, 0,
 		1, 1, 1, 0, 1, 1, 0,
 		0, 1, 1, 1, 0, 0, 0,
 		0, 0
 	};
 	char	*signames[] = {
-		"SIGHUP", "SIGINT", "SIGQUIT", "SIGILL", "SIGTRAP", "SIGIOT", "SIGBUS",
-		"SIGFPE", "SIGKILL", "SIGUSR1", "SIGSEGV", "SIGUSR2", "SIGPIPE", "SIGALRM",
-		"SIGTERM", "SIGSTKFLT", "SIGCHLD", "SIGCONT", "SIGSTOP", "SIGTSTP", "SIGTTIN",
-		"SIGTTOU", "SIGURG", "SIGXCPU", "SIGXFSZ", "SIGVTALRM", "SIGPROF", "SIGWINCH",
-		"SIGIO", "SIGPWR"
+		"SIGHUP",	"SIGINT",	"SIGQUIT",	"SIGILL",	"SIGTRAP",	"SIGIOT",	"SIGBUS",
+		"SIGFPE",	"SIGKILL",	"SIGUSR1",	"SIGSEGV",	"SIGUSR2",	"SIGPIPE",	"SIGALRM",
+		"SIGTERM",	"SIGSTKFLT","SIGCHLD",	"SIGCONT",	"SIGSTOP",	"SIGTSTP",	"SIGTTIN",
+		"SIGTTOU",	"SIGURG",	"SIGXCPU",	"SIGXFSZ",	"SIGVTALRM","SIGPROF",	"SIGWINCH",
+		"SIGIO",	"SIGPWR"
 	};
 
 	if (sig >= 0 && sig < (int)(sizeof(signames) / sizeof(*signames)))
 	{
-		critical = is_critical[sig];
-		sprintf(err_msg, "[signal: %d -> %s]", sig, signames[sig]);
+		critical = is_critical[sig - 1];
+		sprintf(err_msg, "[signal: %d -> %s]", sig, signames[sig - 1]);
 	}
 	else
 		sprintf(err_msg, "[signal: %d -> Unknown]", sig);
@@ -441,8 +437,8 @@ int				main(void)
 {
 	struct sockaddr_in	conn_data;
 	int					server_socket;
-	pid_t				server_pid = fork();
 	short int			sig = 0;
+	pid_t				server_pid = fork();
 
 	if (server_pid)
 		return (server_pid < 0 ?
@@ -450,7 +446,8 @@ int				main(void)
 			ft_printf("Server pid -> [%d]\n", server_pid) * 0);
 	setsid();
 	while (++sig <= 30)
-		signal(sig, sig_handler);
+		if (sig != SIGKILL && sig != SIGSTOP)
+			signal(sig, sig_handler);
 	if (new_chat_room("general", 0) < 0)
 		return (EXIT_FAILURE);
 	else if (init_logs() < 0)

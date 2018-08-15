@@ -41,7 +41,6 @@ typedef struct	s_chat_room
 extern t_dlist			* g_clients;
 extern t_dlist			* g_chat_rooms;
 extern pthread_mutex_t	g_mutex;
-
 /*
 **				Server.c
 **				↓↓↓↓↓↓↓↓

@@ -92,6 +92,7 @@ void	show_users_in_room(t_client * client)
 	free(anwser);
 	anwser = trash;
 	send_data(client->sockfd, anwser, ft_strlen(anwser) + 1, 0);
+	free(anwser);
 }
 
 void	create_chat_room(t_client * client, char ** args)
