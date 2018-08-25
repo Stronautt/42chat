@@ -141,6 +141,16 @@ void			log_client_actions(t_client * client, const char * status, const char * p
 	pthread_mutex_unlock(&g_mutex);
 }
 
+int				nickname_is_busy(const char * nickname, t_dlist * list)
+{
+	t_dlist		* clients = list;
+
+	while (clients && (clients = clients->next) != list)
+		if (!strcasecmp(((t_client *)clients->content)->nickname, nickname))
+			return (1);
+	return (0);
+}
+
 void			get_nickname(t_client * client)
 {
 	char		* ret;
@@ -149,16 +159,31 @@ void			get_nickname(t_client * client)
 
 	if (recieve_data(client->sockfd, (void **)&ret, MSG_WAITALL) < 0)
 		pthread_exit(NULL);
-	else if (!(raw = ft_strsub(ret, 0, 31)))
+	else if (!(raw = ft_strsub(ret, 0, sizeof(client->nickname) - 1)))
 		pthread_exit(NULL);
 	ft_memdel((void **)&ret);
 	trimmed = ft_strtrim(raw);
 	ft_memdel((void **)&raw);
 	if (!nickname_is_valid(trimmed))
-		ft_strncpy(client->nickname, "H@ZZk3R", 31);
-	else
-		ft_strncpy(client->nickname, trimmed, 31);
+	{
+		free(trimmed);
+		trimmed = ft_strdup("H@ZZk3R");
+	}
+	if (nickname_is_busy(trimmed, g_clients))
+	{
+		char	* tmp;
+		int		it = 1;
+
+		tmp = malloc(strlen(trimmed) + 16);
+		do
+			sprintf(tmp, "%s(%d)", trimmed, it++);
+		while (nickname_is_busy(tmp, g_clients));
+		ft_memdel((void **)&trimmed);
+		trimmed = tmp;
+	}
+	ft_strncpy(client->nickname, trimmed, sizeof(client->nickname) - 1);
 	ft_memdel((void **)&trimmed);
+	send_data(client->sockfd, client->nickname, sizeof(client->nickname), 0);
 }
 
 int				validate_msg(char * msg, ssize_t len)
@@ -433,18 +458,36 @@ void			sig_handler(int sig)
 	critical ? exit(sig) : 0;
 }
 
+void			garbage_collector(void)
+{
+	t_dlist		* clients = g_clients;
+	t_client	* client;
+
+	while (1)
+	{
+		while (clients && (clients = clients->next) != g_clients)
+		{
+			client = clients->content;
+			if (!good_connection(client->sockfd))
+				pthread_cancel(client->thread_data);
+		}
+		sleep(3);
+	}
+}
+
 int				main(void)
 {
 	struct sockaddr_in	conn_data;
 	int					server_socket;
 	short int			sig = 0;
-	pid_t				server_pid = fork();
+	pthread_t			gc_thread;
+	/*pid_t				server_pid = fork();
 
 	if (server_pid)
 		return (server_pid < 0 ?
 			ft_printf("Server start failed!\n") * 0 + EXIT_FAILURE :
 			ft_printf("Server pid -> [%d]\n", server_pid) * 0);
-	setsid();
+	setsid();*/
 	while (++sig <= 30)
 		if (sig != SIGKILL && sig != SIGSTOP)
 			signal(sig, sig_handler);
@@ -455,5 +498,7 @@ int				main(void)
 	else if ((server_socket = init_socket(&conn_data)) < 0)
 		return (log_errors(g_log_err_fd, get_error()) * 0 + EXIT_FAILURE);
 	handle_connections(server_socket, &conn_data);
+	pthread_create(&gc_thread, NULL, (void *(*)(void *))garbage_collector, NULL);
+	pthread_detach(gc_thread);
 	return (0);
 }

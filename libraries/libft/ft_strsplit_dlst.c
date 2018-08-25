@@ -1,7 +1,7 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   ft_strsplit_lst.c                                  :+:      :+:    :+:   */
+/*   ft_strsplit_dlst.c                                 :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: pgritsen <pgritsen@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
@@ -12,21 +12,14 @@
 
 #include "libft.h"
 
-static void		node_del(void *content, size_t content_size)
+t_dlist			*ft_strsplit_dlst(char const *s, char c)
 {
-	ft_bzero(content, content_size);
-	ft_memdel(&content);
-	content_size = 0;
-}
-
-t_list			*ft_strsplit_lst(char const *s, char c)
-{
-	t_list	*list;
-	t_list	*tmp;
+	t_dlist	*dlst;
+	t_dlist	*tmp;
 	char	**splitted;
 	ssize_t	it;
 
-	list = NULL;
+	dlst = NULL;
 	if (!s)
 		return (NULL);
 	else if (!(splitted = ft_strsplit(s, c)))
@@ -34,13 +27,13 @@ t_list			*ft_strsplit_lst(char const *s, char c)
 	it = -1;
 	while (splitted[++it])
 	{
-		if (!(tmp = ft_lstnew(splitted[it], sizeof(void *))))
+		if (!(tmp = ft_dlstnew(splitted[it], sizeof(void *))))
 		{
-			ft_lstdel(&list, &node_del);
+			ft_dlstclear(&dlst);
 			return (NULL);
 		}
-		ft_lstadd_back(&list, tmp);
+		ft_dlstpush(&dlst, tmp);
 	}
 	free(splitted);
-	return (list);
+	return (dlst);
 }

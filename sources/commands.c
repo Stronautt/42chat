@@ -33,6 +33,7 @@ void	toogle_silent_mode(t_client * client)
 	char		msg_d[] = "* Silent mode disabled *\n";
 
 	client->silent_mode ^= 1;
+	((t_client *)client->node_in_room->content)->silent_mode ^= 1;
 	if (client->silent_mode)
 		send_data(client->sockfd, msg_e, sizeof(msg_e), 0);
 	else
@@ -64,6 +65,7 @@ void	show_all_rooms(t_client * client)
 	free(anwser);
 	anwser = trash;
 	send_data(client->sockfd, anwser, ft_strlen(anwser) + 1, 0);
+	free(anwser);
 }
 
 void	show_users_in_room(t_client * client)

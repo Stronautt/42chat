@@ -318,4 +318,6 @@ void			ft_dlstpop(t_dlist *dlst);
 
 void			ft_dlstpop_back(t_dlist *dlst);
 
+t_dlist			*ft_strsplit_dlst(char const *s, char c);
+
 #endif

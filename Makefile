@@ -17,16 +17,17 @@ CC			=	gcc
 
 CFLAGS		=	-g3
 CFLAGS		+=	-Wextra -Werror -Wall
+# CFLAGS		+=	-g
 CFLAGS		+=	-O2 -flto=thin -fdata-sections -ffunction-sections
 
 HDRSDIR		=	./includes
 
-HDRS		=	$(addprefix $(HDRSDIR)/, node.h server.h)
+HDRS		=	$(addprefix $(HDRSDIR)/, node.h server.h client.h)
 
 SRCSDIR		=	./sources
 
 SRCS_1		=	server.c data_exchange.c data_validation.c commands.c
-SRCS_2		=	client.c data_exchange.c data_validation.c
+SRCS_2		=	client.c data_exchange.c data_validation.c design.c readline_kostulb.c
 
 OBJDIR		=	./obj
 
@@ -55,7 +56,7 @@ $(NAME_1): $(DIRS) $(OBJ_1) $(HDRS) $(LIBSDEPS)
 
 $(NAME_2): $(DIRS) $(OBJ_2) $(HDRS) $(LIBSDEPS)
 	@printf "\n\033[32m[Creating $(NAME_2)].......\033[0m"
-	@$(CC) $(CFLAGS) -o $(NAME_2) $(OBJ_2) $(LIBRARIES)
+	@$(CC) $(CFLAGS) -o $(NAME_2) $(OBJ_2) $(LIBRARIES) -lncursesw -lm
 	@printf "\033[32m[DONE]\033[0m\n"
 
 $(DIRS):

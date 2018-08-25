@@ -10,9 +10,10 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "node.h"
+#include "client.h"
 
 char			* g_error = NULL;
+t_env			g_env;
 
 const char		* get_error(void)
 {
@@ -76,7 +77,7 @@ int				init_socket(struct sockaddr_in * conn_data, const char * server_ip)
 	return (ret_fd);
 }
 
-int				try_reconnect(int * sockfd, struct sockaddr_in * conn_data, const char * nickname)
+int				try_reconnect(int * sockfd, struct sockaddr_in * conn_data, char ** nickname)
 {
 	pthread_t	thread;
 
@@ -87,21 +88,23 @@ int				try_reconnect(int * sockfd, struct sockaddr_in * conn_data, const char * 
 		return (-1);
 	else if (send_command(*sockfd, RECONNECT, 0) < 0)
 		return (-1);
-	else if (send_data(*sockfd, nickname, ft_strlen(nickname) + 1, 0) < 0)
+	else if (send_data(*sockfd, *nickname, ft_strlen(*nickname) + 1, 0) < 0)
 		return (-1);
+	ft_memdel((void**)nickname);
+	recieve_data(*sockfd, (void **)nickname, 0);
 	pthread_create(&thread, NULL, (void *(*)(void *))(get_messages), (void *)sockfd);
 	pthread_detach(thread);
 	return (1);
 }
 
-void			handle_input(int * sockfd, char * nickname, struct sockaddr_in * conn_data)
+void			handle_input(int * sockfd, char ** nickname, struct sockaddr_in * conn_data)
 {
 	size_t	msg_len;
 	char	* msg;
 	char	* trash;
 	char	prompt[128];
 
-	sprintf(prompt, "You -> [%s]: ", nickname);
+	sprintf(prompt, "You -> [%s]: ", *nickname);
 	while ((msg = readline(prompt)))
 	{
 		trash = ft_strtrim(msg);
@@ -118,6 +121,7 @@ void			handle_input(int * sockfd, char * nickname, struct sockaddr_in * conn_dat
 			while (try_reconnect(sockfd, conn_data, nickname) < 0)
 				;
 			ft_putendl("* You were reconnected, enjoy! *");
+			sprintf(prompt, "You -> [%s]: ", *nickname);
 		}
 		free(msg);
 	}
@@ -141,7 +145,7 @@ void			get_startup_data(int sockfd, struct sockaddr_in * conn_data)
 			return ;
 		trash = ft_strtrim(nickname);
 		free(nickname);
-		nickname = ft_strsub(trash, 0, 31);
+		nickname = ft_strsub(trash, 0, 15);
 		free(trash);
 		if (!nickname_is_valid(nickname))
 		{
@@ -151,6 +155,8 @@ void			get_startup_data(int sockfd, struct sockaddr_in * conn_data)
 	}
 	while ((nickname_len = ft_strlen(nickname)) <= 0);
 	send_data(sockfd, nickname, nickname_len + 1, 0);
+	ft_memdel((void**)&nickname);
+	recieve_data(sockfd, (void **)&nickname, 0);
 	while (recieve_data(sockfd, (void **)&buffer, MSG_WAITALL) > 0)
 	{
 		if (!*buffer)
@@ -163,19 +169,89 @@ void			get_startup_data(int sockfd, struct sockaddr_in * conn_data)
 	}
 	pthread_create(&thread, NULL, (void *(*)(void *))(get_messages), (void *)&sockfd);
 	pthread_detach(thread);
-	handle_input(&sockfd, nickname, conn_data);
+	handle_input(&sockfd, &nickname, conn_data);
 }
+
+const char * CHAT =	"[Pavel]: LAST Hi to all\n"\
+				"[Pavel]: qHi to all\n"\
+				"[Pavel]: wHi to all\n"\
+				"[Pavel]: eHi to all\n"\
+				"[Pavel]: rHi to all\n"\
+				"[Pavel]: Hi to all\n"\
+				"[Pavel]: Hi to all\n"\
+				"[Pavel]: Hi to all\n"\
+				"[Pavel]: Hi to all\n"\
+				"[Pavel]: Hi to all\n"\
+				"[Pavel]: sdfgHi to all\n"\
+				"[Pavel]: Hi to all\n"\
+				"[Pavel]: Hi to all\n"\
+				"[Pavel]: Hi to all\n"\
+				"[Pavel]: Hi to all\n"\
+				"[Pavel]: zzzsHi to all\n"\
+				"[Pavel]: Hi to all\n"\
+				"[Pavel]: Hi to all\n"\
+				"[Pavel]: Hi to all\n"\
+				"[Pavel]: vbnvbHi to all\n"\
+				"[Pavel]: Hi to all\n"\
+				"[Pavel]: Hi to all\n"\
+				"[Pavel]: Hi to all\n"\
+				"[Pavel]: Hi to all\n"\
+				"[Pavel]: Hi to all\n"\
+				"[Pavel]: Hi to all\n"\
+				"[Pavel]: Hi to all\n"\
+				"[Pavel]: Hi to all\n"\
+				"[Pavel]: Hi to all\n"\
+				"[Pavel]: Hi to all\n"\
+				"[Pavel]: Hi to all\n"\
+				"[Pavel]: Hi to all\n"\
+				"[Pavel]: Hi to all\n"\
+				"[Pavel]: Hi to all\n"\
+				"[Pavel]: Hi to all\n"\
+				"[Pavel]: qewqeHi to all\n"\
+				"[Pavel]: Hi to all\n"\
+				"[Pavel]: Hi to all\n"\
+				"[Pavel]: Hi to all\n"\
+				"[Pavel]: Hi to all\n"\
+				"[Pavel]: Hi to all\n"\
+				"[Pavel]: Hi to all\n"\
+				"[Pavel]: Hi to all\n"\
+				"[Pavel]: Hi to all\n"\
+				"[Pavel]: Hi to all\n"\
+				"[Pavel]: Hi to all\n"\
+				"[Pavel]: Hi to all\n"\
+				"[Pavel]: Hi to all\n"\
+				"[Pavel]: Hi to all\n"\
+				"[Pavel]: 5Hi to all\n"\
+				"[Pavel]: Hi to all\n"\
+				"[Pavel]: Hi to all\n"\
+				"[Pavel]: 3Hi to all\n"\
+				"[Pavel]: 2Hi to all asfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff\n"\
+				"[Pavel]: 1Hi to all\n";
 
 int				main(int ac, char **av)
 {
-	struct sockaddr_in	conn_data;
-	int					sockfd;
+	// struct sockaddr_in	conn_data;
+	// int					sockfd;
 
-	if (ac < 2)
-		return (ft_printf("Usage: ./42chat [server_ip_address]\n") * 0 + EXIT_FAILURE);
-	else if ((sockfd = init_socket(&conn_data, av[1])) < 0)
-		return (ft_printf("%s\n", get_error()) * 0 + EXIT_FAILURE);
-	signal(SIGPIPE, SIG_IGN);
-	get_startup_data(sockfd, &conn_data);
-	return (0);
+	// if (ac < 2)
+	// 	return (ft_printf("Usage: ./42chat [server_ip_address]\n") * 0 + EXIT_FAILURE);
+	// else if ((sockfd = init_socket(&conn_data, av[1])) < 0)
+	// 	return (ft_printf("%s\n", get_error()) * 0 + EXIT_FAILURE);
+	// signal(SIGPIPE, SIG_IGN);
+	// get_startup_data(sockfd, &conn_data);
+	// return (0);
+
+	(void)ac;
+	(void)av;
+	bzero(&g_env, sizeof(t_env));
+	g_env.chat_history.lines = ft_strsplit_dlst(CHAT, '\n');
+	g_env.chat_history.size = ft_dlstsize(g_env.chat_history.lines);
+	setlocale(LC_ALL, "");
+	init_design();
+	init_readline();
+
+	handle_input_tmp();
+
+	curses_exit(NULL, NULL);
+	return 0;
 }
