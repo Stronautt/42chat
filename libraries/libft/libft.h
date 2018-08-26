@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   libft.h                                            :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: grevenko <grevenko@student.42.fr>          +#+  +:+       +#+        */
+/*   By: pgritsen <pgritsen@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2017/11/04 13:45:39 by pgritsen          #+#    #+#             */
-/*   Updated: 2018/06/07 20:29:23 by grevenko         ###   ########.fr       */
+/*   Updated: 2018/08/26 20:09:58 by pgritsen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -297,6 +297,12 @@ double			ft_atof(const char *src);
 
 void			*ft_memjoin(const void *m1, const void *m2,
 							size_t b1, size_t b2);
+
+uint64_t		ft_clamp(uint64_t min, uint64_t max, uint64_t val);
+
+size_t			ft_cinustr(const char *s);
+size_t			ft_cinustrn(const char *s, size_t n);
+size_t			ft_cinustrcn(const char *s, size_t n);
 
 /*
 **		Circular double linked list functions

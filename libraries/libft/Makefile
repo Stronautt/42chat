@@ -6,7 +6,7 @@
 #    By: pgritsen <pgritsen@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2017/11/01 13:50:42 by pgritsen          #+#    #+#              #
-#    Updated: 2018/08/01 15:49:55 by pgritsen         ###   ########.fr        #
+#    Updated: 2018/08/26 19:51:04 by pgritsen         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -43,7 +43,8 @@ SRCS		= 	ft_lstnew.c ft_strcat.c ft_strncpy.c ft_memalloc.c ft_strchr.c		\
 				ft_swap.c ft_dlstnew.c ft_dlstpush.c ft_dlstpush_back.c				\
 				ft_dlstdelelem.c ft_dlstsize.c ft_dlstpop.c ft_dlstpop_back.c		\
 				ft_dlstclear.c ft_get_fractional.c ft_get_content.c ft_atof.c		\
-				ft_memjoin.c ft_dlstindex.c ft_strsplit_dlst.c
+				ft_memjoin.c ft_dlstindex.c ft_strsplit_dlst.c ft_clamp.c			\
+				ft_cinustr.c ft_cinustrn.c ft_cinustrcn.c
 
 HDRS		=	ftprintf.h libft.h ftstring.h
 

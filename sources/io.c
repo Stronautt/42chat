@@ -1,7 +1,7 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                                            */
-/*   readline_kostulb.c                                                       */
+/*   io.c                                                                     */
 /*                                                                            */
 /*   By: phrytsenko                                                           */
 /*                                                                            */
@@ -12,8 +12,8 @@
 
 #include "client.h"
 
-int				g_symb = 0;
-bool			g_input_avb = FALSE;
+int		g_symb = 0;
+bool	g_input_avb = false;
 
 static int		readline_input_avail(void)
 {
@@ -33,32 +33,47 @@ static void		got_command(char *line)
 	{
 		ft_dlstpush(&g_env.chat_history.lines, ft_dlstnew(line, sizeof(void *)));
 		g_env.chat_history.size++;
+		g_env.layot.chat_offset = 0;
+		display_chat();
 	}
 }
 
 static void		readline_redisplay(void)
 {
-	// size_t	prompt_width = strwidth(rl_display_prompt, 0);
-	// size_t	cursor_col = prompt_width +
-	// 					strnwidth(rl_line_buffer, rl_point, prompt_width);
+	size_t	cursor_col = ft_cinustrn(rl_line_buffer, rl_point);
+	size_t	offset_x = cursor_col % (g_env.ws.input->_maxx + 1);
+	size_t	rl_line_buffer_len = ft_cinustr(rl_line_buffer);
+	char	* msg = ft_strsub(rl_line_buffer, ft_cinustrcn(rl_line_buffer, cursor_col / (g_env.ws.input->_maxx + 1) * (g_env.ws.input->_maxx + 1)),
+							rl_point + ft_cinustrcn(rl_line_buffer + rl_point, g_env.ws.input->_maxx - offset_x + 1));
 
 	werase(g_env.ws.input);
-	mvwprintw(g_env.ws.input, 0, 0, "%s%s", rl_display_prompt, rl_line_buffer);
+	rl_line_buffer_len > 255 ? wattron(g_env.ws.input, COLOR_PAIR(1)) : 0;
+	wprintw(g_env.ws.input, "%s", msg);
+	rl_line_buffer_len > 255 ? wattroff(g_env.ws.input, COLOR_PAIR(1)) : 0;
+	free(msg);
 	wrefresh(g_env.ws.input);
+	wmove(g_env.ws.input, 0, offset_x);
 }
 
 void			handle_input_tmp(void)
 {
 	while ((g_symb = wgetch(g_env.ws.input)) != ERR)
 	{
-		if (g_symb == 27)
+		if (g_symb == 0x1b)
 		{
 			uint64_t	utf = 0;
 
 			((char *)&utf)[0] = g_symb;
 			nodelay(g_env.ws.input, TRUE);
-			for (int it = 0; it < 2; it++)
-				((char *)&utf)[it + 1] = (g_symb = wgetch(g_env.ws.input)) == ERR ? 0 : g_symb;
+			for (size_t it = 1; it < sizeof(uint64_t); it++)
+			{
+				if ((g_symb = wgetch(g_env.ws.input)) == 0x1b)
+				{
+					ungetch(g_symb);
+					break ;
+				}
+				((char *)&utf)[it] = (g_symb == ERR ? 0 : g_symb);
+			}
 			nodelay(g_env.ws.input, FALSE);
 			switch (utf)
 			{
@@ -71,30 +86,26 @@ void			handle_input_tmp(void)
 					g_env.layot.chat_offset ? g_env.layot.chat_offset-- : (uint)beep();
 					display_chat();
 					break ;
+				case RL_KEY_ESC:
+					return ;
 				default:
-					// For debug
-					// werase(g_env.ws.input);
-					// mvwprintw(g_env.ws.input, 0, 0, "%ld", utf);
-					// wrefresh(g_env.ws.input);
-					werase(g_env.ws.input);
 					g_input_avb = true;
-					for (size_t it = 0; it < sizeof(uint64_t); it++)
-					{
-						g_symb = ((char *)&utf)[it];
+					for (size_t it = 0; it < sizeof(uint64_t) && (g_symb = ((char *)&utf)[it]); it++)
 						rl_callback_read_char();
-					}
-					wrefresh(g_env.ws.input);
 					break ;
 			}
+		}
+		else if (g_symb == '\f')
+		{
+			g_env.layot.chat_offset = 0;
+			display_chat();
 		}
 		else if (g_symb == KEY_RESIZE)
 			continue ;
 		else
 		{
-			werase(g_env.ws.input);
 			g_input_avb = true;
 			rl_callback_read_char();
-			wrefresh(g_env.ws.input);
 		}
 	}
 }
@@ -112,5 +123,5 @@ void			init_readline(void)
 	rl_input_available_hook = readline_input_avail;
 	rl_redisplay_function = readline_redisplay;
 
-	rl_callback_handler_install("Message: ", got_command);
+	rl_callback_handler_install("Your message", got_command);
 }

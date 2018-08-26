@@ -6,7 +6,7 @@
 /*   By: pgritsen <pgritsen@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2018/07/30 13:18:50 by pgritsen          #+#    #+#             */
-/*   Updated: 2018/08/01 18:25:53 by pgritsen         ###   ########.fr       */
+/*   Updated: 2018/08/26 21:40:30 by pgritsen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -221,6 +221,26 @@ const char * CHAT =	"[Pavel]: LAST Hi to all\n"\
 				"[Pavel]: Hi to all\n"\
 				"[Pavel]: Hi to all\n"\
 				"[Pavel]: Hi to all\n"\
+				"[Pavel]: Hi to all\n"\
+				"[Pavel]: Hi to all\n"\
+				"[Pavel]: Hi to all\n"\
+				"[Pavel]: Hi to all\n"\
+				"[Pavel]: Hi to all\n"\
+				"[Pavel]: Hi to all\n"\
+				"[Pavel]: Hi to all\n"\
+				"[Pavel]: Hi to all\n"\
+				"[Pavel]: Hi to all\n"\
+				"[Pavel]: Hi to all\n"\
+				"[Pavel]: Hi to all\n"\
+				"[Pavel]: Hi to all\n"\
+				"[Pavel]: Hi to all\n"\
+				"[Pavel]: Hi to all\n"\
+				"[Pavel]: Hi to all\n"\
+				"[Pavel]: Hi to all\n"\
+				"[Pavel]: Hi to all\n"\
+				"[Pavel]: Hi to all\n"\
+				"[Pavel]: Hi to all\n"\
+				"[Pavel]: Hi to all\n"\
 				"[Pavel]: 5Hi to all\n"\
 				"[Pavel]: Hi to all\n"\
 				"[Pavel]: Hi to all\n"\
@@ -248,7 +268,6 @@ int				main(int ac, char **av)
 	g_env.chat_history.size = ft_dlstsize(g_env.chat_history.lines);
 	setlocale(LC_ALL, "");
 	init_design();
-	init_readline();
 
 	handle_input_tmp();
 

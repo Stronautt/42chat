@@ -3,10 +3,10 @@
 #                                                         :::      ::::::::    #
 #    Makefile                                           :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: phrytsenko <phrytsenko@student.42.fr>      +#+  +:+       +#+         #
+#    By: pgritsen <pgritsen@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2017/12/10 17:05:19 by pgritsen          #+#    #+#              #
-#    Updated: 2018/08/03 17:46:45 by phrytsenko       ###   ########.fr        #
+#    Updated: 2018/08/26 16:26:23 by pgritsen         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -27,7 +27,7 @@ HDRS		=	$(addprefix $(HDRSDIR)/, node.h server.h client.h)
 SRCSDIR		=	./sources
 
 SRCS_1		=	server.c data_exchange.c data_validation.c commands.c
-SRCS_2		=	client.c data_exchange.c data_validation.c design.c readline_kostulb.c
+SRCS_2		=	client.c data_exchange.c data_validation.c design.c io.c
 
 OBJDIR		=	./obj
 
