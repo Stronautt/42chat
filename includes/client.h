@@ -18,10 +18,19 @@
 # include <math.h>
 # include <locale.h>
 # include <wchar.h>
+# include <event.h>
 
 # define RL_KEY_UP 0x415b1b
 # define RL_KEY_DOWN 0x425b1b
+# define RL_KEY_PAGEUP 0x7E355B1B
+# define RL_KEY_PAGEDOWN 0x7E365B1B
 # define RL_KEY_ESC 0x1b
+
+# define SELF_POINT "\02"
+
+# define C_COLOR_RED 1
+# define C_COLOR_CYAN 2
+# define C_COLOR_GREEN 3
 
 typedef struct	s_workspaces
 {
@@ -36,6 +45,7 @@ typedef struct	s_workspaces
 typedef struct	s_layot
 {
 	uint			chat_offset;
+	uint			u_online_offset;
 }				t_layot;
 
 typedef struct	s_buffer
@@ -46,13 +56,22 @@ typedef struct	s_buffer
 
 typedef struct	s_env
 {
-	t_workspaces	ws;
-	t_layot			layot;
-	t_buffer		chat_history;
+	struct event		ev_getmsg;
+	int					sockfd;
+	char				* nickname;
+	char				* room_name;
+	t_layot				layot;
+	uint8_t				connection_lost;
+	t_buffer			chat_history;
+	t_buffer			users_online;
+	t_workspaces		ws;
+	struct sockaddr_in	conn_data;
 }				t_env;
 
 extern char		* g_error;
 extern t_env	g_env;
+
+int				try_reconnect(void);
 
 void			resize_curses(int sig);
 
@@ -62,7 +81,7 @@ void			init_design(void);
 
 void			init_readline(void);
 
-void			handle_input_tmp(void);
+void			handle_input(int fd, short ev, bool block);
 
 int				curses_exit(void (*clear_callback)(), void * callback_data);
 

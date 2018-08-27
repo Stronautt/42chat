@@ -112,10 +112,10 @@ void	sync_chat_history(t_client * client)
 			send_data(client->sockfd, buffer, buf_len + 1, 0);
 		}
 		if (buf_len < 0)
-			send_data(client->sockfd, "* Unable to load history *\n", 28, 0);
+			send_data(client->sockfd, "* Unable to load history *", 28, 0);
 	}
 	else
-		send_data(client->sockfd, "* Unable to load history *\n", 28, 0);
+		send_data(client->sockfd, "* Unable to load history *", 28, 0);
 	send_data(client->sockfd, "", 1, 0);
 }
 
@@ -133,8 +133,8 @@ void			log_client_actions(t_client * client, const char * status, const char * p
 	strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S", tm_info);
 	pthread_mutex_lock(&g_mutex);
 	dprintf(g_log_sys_fd, "[%s][%s] -> %s\n", buffer, client->nickname, status);
-	sprintf(msg, "* %s %s *\n", client->nickname, public_status);
-	dprintf(chat_room->log_fd, "%s", msg);
+	sprintf(msg, "* %s %s *", client->nickname, public_status);
+	dprintf(chat_room->log_fd, "%s\n", msg);
 	while (clients && (clients = clients->next) != chat_room->users)
 			if (clients->content && clients != client->node_in_room)
 			send_data(((t_client *)clients->content)->sockfd, msg, ft_strlen(msg) + 1, 0);
@@ -159,7 +159,7 @@ void			get_nickname(t_client * client)
 
 	if (recieve_data(client->sockfd, (void **)&ret, MSG_WAITALL) < 0)
 		pthread_exit(NULL);
-	else if (!(raw = ft_strsub(ret, 0, sizeof(client->nickname) - 1)))
+	else if (!(raw = ft_strsub(ret, 0, ft_cinustrcn(ret, MAX_NICKNAME_LEN))))
 		pthread_exit(NULL);
 	ft_memdel((void **)&ret);
 	trimmed = ft_strtrim(raw);
@@ -186,13 +186,28 @@ void			get_nickname(t_client * client)
 	send_data(client->sockfd, client->nickname, sizeof(client->nickname), 0);
 }
 
-int				validate_msg(char * msg, ssize_t len)
+int				validate_msg(char * msg)
 {
-	if (!msg || len < 1 || len > 255)
+	ssize_t 		len = ft_cinustr(msg);
+	unsigned char	*p_s = (unsigned char *)msg;
+
+	if (!msg || len < 1 || len > MSG_MAX_LEN)
 		return (-1);
-	while (len-- > 1)
-		if (*msg++ >= 0 && !ft_isprint(*(msg - 1)))
-			*(msg - 1) = '*';
+	len = ft_strlen(msg);
+	while (len > 0 && *p_s)
+		if (*p_s == 0x1B && (p_s += 8))
+			len -= 8;
+		else if (*p_s >= 0xC2 && *p_s <= 0xDF && (p_s += 2))
+			len -= 2;
+		else if (*p_s >= 0xE0 && *p_s <= 0xEF && (p_s += 3))
+			len -= 3;
+		else if (*p_s >= 0xF0 && *p_s <= 0xF4 && (p_s += 3))
+			len -= 4;
+		else
+		{
+			!ft_isprint(*p_s++) ? *p_s = '*' : 0;
+			len--;
+		}
 	return (1);
 }
 
@@ -226,7 +241,7 @@ uint8_t			treated_as_command(char * msg, ssize_t msg_l, t_client * client)
 			cmds[i].func(client, args + 1);
 	if (!found)
 	{
-		len = sprintf(buf, "Unknown command: [%s]\n", args[0] + 1);
+		len = sprintf(buf, "Unknown command: [%s]", args[0] + 1);
 		send_data(client->sockfd, buf, len + 1, 0);
 	}
 	free_splitted(args);
@@ -262,7 +277,7 @@ void			trace_income_msgs(t_client * client)
 		t_chat_room	* chat_room = client->chat_room_node->content;
 		t_dlist		* clients = chat_room->users;
 
-		if (validate_msg(msg, msg_l) < 0)
+		if (validate_msg(msg) < 0)
 		{
 			ft_memdel((void **)&msg);
 			continue ;
@@ -272,11 +287,11 @@ void			trace_income_msgs(t_client * client)
 		else if (!(public_msg = ft_strnew(msg_l + ft_strlen(client->nickname) + 16)))
 			pthread_exit(NULL);
 		msg[msg_l] = 0;
-		public_msg_l = sprintf(public_msg, "[%s]: %s\n", client->nickname, msg);
+		public_msg_l = sprintf(public_msg, "[%s]: %s", client->nickname, msg);
 		ft_memdel((void **)&msg);
 		public_msg[public_msg_l] = 0;
 		pthread_mutex_lock(&g_mutex);
-		msg_l = write(chat_room->log_fd, public_msg, public_msg_l);
+		msg_l = dprintf(chat_room->log_fd, "%s\n", public_msg);
 		while (clients && (clients = clients->next) != chat_room->users)
 			if (clients->content && clients != client->node_in_room)
 				send_msg(clients->content, public_msg, public_msg_l);
@@ -301,7 +316,6 @@ void			disconnect_client(t_dlist * client_node)
 void			*handle_client(t_dlist * client_node)
 {
 	t_command	cmd;
-	char		invite_msg[] = "Welcome to 42Chat!\n";
 	t_client	* client = client_node->content;
 	t_client	* tmp;
 	char		* sys_act;
@@ -313,8 +327,6 @@ void			*handle_client(t_dlist * client_node)
 		client->chat_room_node = g_chat_rooms->next;
 		if (cmd == CONNECT)
 		{
-			if (send_data(client->sockfd, invite_msg, sizeof(invite_msg), 0) < 0)
-				pthread_exit(NULL);
 			get_nickname(client);
 			sync_chat_history(client);
 			sys_act = "CONNECTED";
@@ -481,13 +493,13 @@ int				main(void)
 	int					server_socket;
 	short int			sig = 0;
 	pthread_t			gc_thread;
-	/*pid_t				server_pid = fork();
+	pid_t				server_pid = fork();
 
 	if (server_pid)
 		return (server_pid < 0 ?
 			ft_printf("Server start failed!\n") * 0 + EXIT_FAILURE :
 			ft_printf("Server pid -> [%d]\n", server_pid) * 0);
-	setsid();*/
+	setsid();
 	while (++sig <= 30)
 		if (sig != SIGKILL && sig != SIGSTOP)
 			signal(sig, sig_handler);

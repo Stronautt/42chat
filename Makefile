@@ -13,11 +13,11 @@
 NAME_1		=	chat_server
 NAME_2		=	42chat
 
-CC			=	gcc
+CC			=	clang
 
 CFLAGS		=	-g3
 CFLAGS		+=	-Wextra -Werror -Wall
-# CFLAGS		+=	-g
+CFLAGS		+=	-g
 CFLAGS		+=	-O2 -flto=thin -fdata-sections -ffunction-sections
 
 HDRSDIR		=	./includes
@@ -49,22 +49,18 @@ uniq		=	$(if $1,$(firstword $1) $(call uniq,$(filter-out $(firstword $1),$1)))
 
 all: lib $(NAME_1) $(NAME_2)
 
-$(NAME_1): $(DIRS) $(OBJ_1) $(HDRS) $(LIBSDEPS)
+$(NAME_1): $(OBJ_1) $(HDRS) $(LIBSDEPS)
 	@printf "\n\033[32m[Creating $(NAME_1)].......\033[0m"
 	@$(CC) $(CFLAGS) -o $(NAME_1) $(OBJ_1) $(LIBRARIES)
 	@printf "\033[32m[DONE]\033[0m\n"
 
-$(NAME_2): $(DIRS) $(OBJ_2) $(HDRS) $(LIBSDEPS)
+$(NAME_2): $(OBJ_2) $(HDRS) $(LIBSDEPS)
 	@printf "\n\033[32m[Creating $(NAME_2)].......\033[0m"
-	@$(CC) $(CFLAGS) -o $(NAME_2) $(OBJ_2) $(LIBRARIES) -lncursesw -lm
-	@printf "\033[32m[DONE]\033[0m\n"
-
-$(DIRS):
-	@printf "\n\033[32m[Creating folder $@].......\033[0m"
-	@mkdir $@
+	@$(CC) $(CFLAGS) -o $(NAME_2) $(OBJ_2) $(LIBRARIES) -lncursesw -lm -levent
 	@printf "\033[32m[DONE]\033[0m\n"
 
 $(call uniq, $(OBJ_1) $(OBJ_2)): $(OBJDIR)/%.o : $(SRCSDIR)/%.c $(HDRS)
+	@mkdir -p $(DIRS)
 	@printf "\033[32m[Compiling $<].......\033[0m"
 	@$(CC) $(CFLAGS) -c $< -o $@ $(INCLUDES)
 	@printf "\033[32m[DONE]\033[0m\n"
@@ -74,7 +70,7 @@ $(LIBSDEPS): lib
 lib:
 	@printf "\033[33m[Creating libft.a].......[START]\033[0m\n"
 	@make -j3 -C $(LIBFOLDER)/libft
-	@printf "\033[33m[Creating libft.a].......[END]\033[0m\n\n"
+	@printf "\033[33m[Creating libft.a].......[END]\033[0m\n"
 
 clean:
 	@printf "\n\033[31m[Cleaning $(NAME_1) and $(NAME_2) object files].......\033[0m"

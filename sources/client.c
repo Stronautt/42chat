@@ -26,25 +26,31 @@ void			set_error(const char * msg)
 	g_error = ft_strdup(msg);
 }
 
-void	clear_prompt(void)
-{
-	struct winsize	w;
-
-	ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
-	ft_printf("\r%*s\r", w.ws_col, "");
-}
-
-void			get_messages(int * sockfd)
+void			get_messages(int fd, short ev, void *data)
 {
 	char			* buffer;
+	char			* point;
+	t_dlist			* lines;
+	t_dlist			* tmp;
 
-	while (recieve_data(*sockfd, (void **)&buffer, MSG_WAITALL) > 0)
-	{
-		clear_prompt();
-		ft_putstr(buffer);
-		ft_memdel((void**)&buffer);
-		rl_forced_update_display();
-	}
+	(void)fd;
+	(void)ev;
+	(void)data;
+	if (recieve_data(fd, (void **)&buffer, MSG_WAITALL) < 0)
+		return ;
+	lines = ft_strsplit_dlst(buffer, '\n');
+	tmp = lines;
+	while (tmp && (tmp = tmp->next) != lines)
+		if ((point = ft_strchr(tmp->content, '\a')))
+		{
+			g_env.layot.chat_offset = 0;
+			beep();
+			ft_strclr(point);
+		}
+	g_env.chat_history.size += ft_dlstsize(lines);
+	ft_dlstmerge(&g_env.chat_history.lines, &lines);
+	free(buffer);
+	display_chat();
 }
 
 int				init_socket(struct sockaddr_in * conn_data, const char * server_ip)
@@ -77,200 +83,72 @@ int				init_socket(struct sockaddr_in * conn_data, const char * server_ip)
 	return (ret_fd);
 }
 
-int				try_reconnect(int * sockfd, struct sockaddr_in * conn_data, char ** nickname)
+int				try_reconnect(void)
 {
-	pthread_t	thread;
-
-	close(*sockfd);
-	if ((*sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
+	close(g_env.sockfd);
+	if ((g_env.sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
 		return (-1);
-	else if (connect(*sockfd, (struct sockaddr *)conn_data, sizeof(*conn_data)) < 0)
+	else if (connect(g_env.sockfd, (struct sockaddr *)&g_env.conn_data,
+						sizeof(g_env.conn_data)) < 0)
 		return (-1);
-	else if (send_command(*sockfd, RECONNECT, 0) < 0)
+	else if (send_command(g_env.sockfd, RECONNECT, 0) < 0)
 		return (-1);
-	else if (send_data(*sockfd, *nickname, ft_strlen(*nickname) + 1, 0) < 0)
+	else if (send_data(g_env.sockfd, g_env.nickname,
+						ft_strlen(g_env.nickname) + 1, 0) < 0)
 		return (-1);
-	ft_memdel((void**)nickname);
-	recieve_data(*sockfd, (void **)nickname, 0);
-	pthread_create(&thread, NULL, (void *(*)(void *))(get_messages), (void *)sockfd);
-	pthread_detach(thread);
+	event_del(&g_env.ev_getmsg);
+	event_set(&g_env.ev_getmsg, g_env.sockfd, EV_READ|EV_PERSIST, get_messages, NULL);
+	event_add(&g_env.ev_getmsg, NULL);
+	ft_memdel((void**)&g_env.nickname);
+	recieve_data(g_env.sockfd, (void **)&g_env.nickname, 0);
 	return (1);
 }
 
-void			handle_input(int * sockfd, char ** nickname, struct sockaddr_in * conn_data)
+static void			get_startup_data(void)
 {
-	size_t	msg_len;
-	char	* msg;
+	char	* buffer = NULL;
+	char	* tmp = NULL;
 	char	* trash;
-	char	prompt[128];
 
-	sprintf(prompt, "You -> [%s]: ", *nickname);
-	while ((msg = readline(prompt)))
+	handle_input(0, 0, true);
+	nodelay(g_env.ws.input, TRUE);
+	while (recieve_data(g_env.sockfd, (void **)&tmp, MSG_WAITALL) > 0)
 	{
-		trash = ft_strtrim(msg);
-		free(msg);
-		msg_len = ft_strlen(trash);
-		if (msg_len > 255)
-			ft_putendl("* Your message too long, it was trimmed to 255 symbols *");
-		msg = ft_strsub(trash, 0, 255);
-		free(trash);
-		if ((msg_len = ft_strlen(msg)) > 0
-			&& send_data(*sockfd, msg, msg_len + 1, 0) < 0)
+		if (!*tmp)
 		{
-			ft_putendl("* You were diconnected from server, reconnecting... *");
-			while (try_reconnect(sockfd, conn_data, nickname) < 0)
-				;
-			ft_putendl("* You were reconnected, enjoy! *");
-			sprintf(prompt, "You -> [%s]: ", *nickname);
-		}
-		free(msg);
-	}
-}
-
-void			get_startup_data(int sockfd, struct sockaddr_in * conn_data)
-{
-	char		* buffer;
-	char		* nickname;
-	char		* trash;
-	pthread_t	thread;
-	size_t		nickname_len;
-
-	if (recieve_data(sockfd, (void **)&trash, MSG_WAITALL) < 0)
-		exit(ft_printf("Couldn't connect to server, try again later.\n") * 0 + EXIT_FAILURE);
-	ft_putendl(trash);
-	ft_memdel((void **)&trash);
-	do
-	{
-		if (!(nickname = readline("Enter your login: ")))
-			return ;
-		trash = ft_strtrim(nickname);
-		free(nickname);
-		nickname = ft_strsub(trash, 0, 15);
-		free(trash);
-		if (!nickname_is_valid(nickname))
-		{
-			ft_putendl("* Login must containt only ascii letters and numbers *");
-			nickname[0] = 0;
-		}
-	}
-	while ((nickname_len = ft_strlen(nickname)) <= 0);
-	send_data(sockfd, nickname, nickname_len + 1, 0);
-	ft_memdel((void**)&nickname);
-	recieve_data(sockfd, (void **)&nickname, 0);
-	while (recieve_data(sockfd, (void **)&buffer, MSG_WAITALL) > 0)
-	{
-		if (!*buffer)
-		{
-			ft_memdel((void **)&buffer);
+			ft_memdel((void **)&tmp);
 			break ;
 		}
-		ft_putstr(buffer);
+		trash = ft_strjoin(buffer, tmp);
+		ft_memdel((void **)&tmp);
 		ft_memdel((void **)&buffer);
+		buffer = trash;
 	}
-	pthread_create(&thread, NULL, (void *(*)(void *))(get_messages), (void *)&sockfd);
-	pthread_detach(thread);
-	handle_input(&sockfd, &nickname, conn_data);
+	g_env.chat_history.lines = ft_strsplit_dlst(buffer, '\n');
+	free(buffer);
+	g_env.chat_history.size = ft_dlstsize(g_env.chat_history.lines);
+	display_chat();
 }
-
-const char * CHAT =	"[Pavel]: LAST Hi to all\n"\
-				"[Pavel]: qHi to all\n"\
-				"[Pavel]: wHi to all\n"\
-				"[Pavel]: eHi to all\n"\
-				"[Pavel]: rHi to all\n"\
-				"[Pavel]: Hi to all\n"\
-				"[Pavel]: Hi to all\n"\
-				"[Pavel]: Hi to all\n"\
-				"[Pavel]: Hi to all\n"\
-				"[Pavel]: Hi to all\n"\
-				"[Pavel]: sdfgHi to all\n"\
-				"[Pavel]: Hi to all\n"\
-				"[Pavel]: Hi to all\n"\
-				"[Pavel]: Hi to all\n"\
-				"[Pavel]: Hi to all\n"\
-				"[Pavel]: zzzsHi to all\n"\
-				"[Pavel]: Hi to all\n"\
-				"[Pavel]: Hi to all\n"\
-				"[Pavel]: Hi to all\n"\
-				"[Pavel]: vbnvbHi to all\n"\
-				"[Pavel]: Hi to all\n"\
-				"[Pavel]: Hi to all\n"\
-				"[Pavel]: Hi to all\n"\
-				"[Pavel]: Hi to all\n"\
-				"[Pavel]: Hi to all\n"\
-				"[Pavel]: Hi to all\n"\
-				"[Pavel]: Hi to all\n"\
-				"[Pavel]: Hi to all\n"\
-				"[Pavel]: Hi to all\n"\
-				"[Pavel]: Hi to all\n"\
-				"[Pavel]: Hi to all\n"\
-				"[Pavel]: Hi to all\n"\
-				"[Pavel]: Hi to all\n"\
-				"[Pavel]: Hi to all\n"\
-				"[Pavel]: Hi to all\n"\
-				"[Pavel]: qewqeHi to all\n"\
-				"[Pavel]: Hi to all\n"\
-				"[Pavel]: Hi to all\n"\
-				"[Pavel]: Hi to all\n"\
-				"[Pavel]: Hi to all\n"\
-				"[Pavel]: Hi to all\n"\
-				"[Pavel]: Hi to all\n"\
-				"[Pavel]: Hi to all\n"\
-				"[Pavel]: Hi to all\n"\
-				"[Pavel]: Hi to all\n"\
-				"[Pavel]: Hi to all\n"\
-				"[Pavel]: Hi to all\n"\
-				"[Pavel]: Hi to all\n"\
-				"[Pavel]: Hi to all\n"\
-				"[Pavel]: Hi to all\n"\
-				"[Pavel]: Hi to all\n"\
-				"[Pavel]: Hi to all\n"\
-				"[Pavel]: Hi to all\n"\
-				"[Pavel]: Hi to all\n"\
-				"[Pavel]: Hi to all\n"\
-				"[Pavel]: Hi to all\n"\
-				"[Pavel]: Hi to all\n"\
-				"[Pavel]: Hi to all\n"\
-				"[Pavel]: Hi to all\n"\
-				"[Pavel]: Hi to all\n"\
-				"[Pavel]: Hi to all\n"\
-				"[Pavel]: Hi to all\n"\
-				"[Pavel]: Hi to all\n"\
-				"[Pavel]: Hi to all\n"\
-				"[Pavel]: Hi to all\n"\
-				"[Pavel]: Hi to all\n"\
-				"[Pavel]: Hi to all\n"\
-				"[Pavel]: Hi to all\n"\
-				"[Pavel]: Hi to all\n"\
-				"[Pavel]: 5Hi to all\n"\
-				"[Pavel]: Hi to all\n"\
-				"[Pavel]: Hi to all\n"\
-				"[Pavel]: 3Hi to all\n"\
-				"[Pavel]: 2Hi to all asfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff\n"\
-				"[Pavel]: 1Hi to all\n";
 
 int				main(int ac, char **av)
 {
-	// struct sockaddr_in	conn_data;
-	// int					sockfd;
+	struct event ev_input;
 
-	// if (ac < 2)
-	// 	return (ft_printf("Usage: ./42chat [server_ip_address]\n") * 0 + EXIT_FAILURE);
-	// else if ((sockfd = init_socket(&conn_data, av[1])) < 0)
-	// 	return (ft_printf("%s\n", get_error()) * 0 + EXIT_FAILURE);
-	// signal(SIGPIPE, SIG_IGN);
-	// get_startup_data(sockfd, &conn_data);
-	// return (0);
-
-	(void)ac;
-	(void)av;
 	bzero(&g_env, sizeof(t_env));
-	g_env.chat_history.lines = ft_strsplit_dlst(CHAT, '\n');
-	g_env.chat_history.size = ft_dlstsize(g_env.chat_history.lines);
+	if (ac < 2)
+		return (ft_printf("Usage: ./42chat [server_ip_address]\n") * 0 + EXIT_FAILURE);
+	else if ((g_env.sockfd = init_socket(&g_env.conn_data, av[1])) < 0)
+		return (ft_printf("%s\n", get_error()) * 0 + EXIT_FAILURE);
+	signal(SIGPIPE, SIG_IGN);
 	setlocale(LC_ALL, "");
+	event_init();
 	init_design();
-
-	handle_input_tmp();
-
+	get_startup_data();
+	event_set(&g_env.ev_getmsg, g_env.sockfd, EV_READ|EV_PERSIST, get_messages, NULL);
+	event_add(&g_env.ev_getmsg, NULL);
+	event_set(&ev_input, 0, EV_READ | EV_PERSIST, (void (*)(evutil_socket_t, short, void *))handle_input, NULL);
+	event_add(&ev_input, NULL);
+	event_dispatch();
 	curses_exit(NULL, NULL);
-	return 0;
+	return (0);
 }

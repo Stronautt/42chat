@@ -32,8 +32,10 @@
 # include <readline/history.h>
 # include <signal.h>
 
-#define PORT 2089
+# define PORT 2089
 
+# define MSG_MAX_LEN 255
+# define MAX_NICKNAME_LEN 15
 typedef enum	e_command
 {
 	CONNECT = 1, RECONNECT

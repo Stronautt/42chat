@@ -24,7 +24,7 @@ typedef struct	s_client
 	int			sockfd;
 	uint8_t		silent_mode;
 	pthread_t	thread_data;
-	char		nickname[16];
+	char		nickname[64];
 	t_dlist		* chat_room_node;
 	t_dlist		* node_in_room;
 }				t_client;
