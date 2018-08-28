@@ -12,6 +12,18 @@
 
 #include "client.h"
 
+void			display_users_online(void)
+{
+	if (g_env.term_size.ws_col < TERM_MIN_WIDTH || g_env.term_size.ws_row < TERM_MIN_HEIGHT)
+		return ;
+	mvwhline(g_env.ws.chat_b, 0, 1, 0, g_env.ws.chat_b->_maxx - 1);
+	g_env.room_name ? mvwprintw(g_env.ws.chat_b, 0,
+			(g_env.ws.chat_b->_maxx - ft_cinustr(g_env.room_name) - 6) / 2,
+			"Room: %s", g_env.room_name) : 0;
+	wrefresh(g_env.ws.chat_b);
+	rl_forced_update_display();
+}
+
 void			display_chat(void)
 {
 	t_dlist			* tmp;
@@ -19,10 +31,12 @@ void			display_chat(void)
 	int				offset;
 	const char		* warning_msg = "Loading...";
 
+	if (g_env.term_size.ws_col < TERM_MIN_WIDTH || g_env.term_size.ws_row < TERM_MIN_HEIGHT)
+		return ;
 	werase(g_env.ws.chat);
 	if (!g_env.nickname || g_env.connection_lost)
 		mvwprintw(g_env.ws.chat, g_env.ws.chat->_maxy / 2,
-			(g_env.ws.chat->_maxx - ft_strlen(warning_msg)) / 2, warning_msg);
+			(g_env.ws.chat->_maxx - ft_cinustr(warning_msg)) / 2, warning_msg);
 	else
 	{
 		my = g_env.ws.chat->_maxy + 1;
@@ -36,7 +50,8 @@ void			display_chat(void)
 
 			if (offset && offset--)
 				continue ;
-			my -= ft_cinustr(tmp->content) / (g_env.ws.chat->_maxx + 2) + 1;
+			if ((my -= ft_cinustr(tmp->content) / (g_env.ws.chat->_maxx + 2) + 1) < 0)
+				break ;
 			if ((!nickname || !*nickname || !msg || !*msg) && tmp->content)
 				mvwprintw(g_env.ws.chat, my, 0, "%s", tmp->content);
 			else
@@ -50,7 +65,6 @@ void			display_chat(void)
 			}
 		}
 	}
-	wrefresh(g_env.ws.chat_b);
 	wrefresh(g_env.ws.chat);
 	rl_forced_update_display();
 }
@@ -61,19 +75,24 @@ void			resize_curses(int sig)
 	struct winsize	size;
 
 	(void)sig;
-	ioctl(fileno(stdout), TIOCGWINSZ, (char*)&size);
+	ioctl(fileno(stdout), TIOCGWINSZ, (char*)&g_env.term_size);
+	size = g_env.term_size;
 	resizeterm(size.ws_row, size.ws_col);
-	if (size.ws_col < 50 || size.ws_row < 8)
+	if (size.ws_col < TERM_MIN_WIDTH || size.ws_row < TERM_MIN_HEIGHT)
 	{
 		int		offset = (size.ws_col - sidebar_w) / 2;
 
+		curs_set(0);
 		erase();
+		werase(g_env.ws.input);
 		offset < 0 ? offset = 0 : 0;
 		mvprintw(size.ws_row / 2, offset, "Window too small!");
+		wrefresh(g_env.ws.input);
 		refresh();
 	}
 	else
 	{
+		curs_set(1);
 		g_env.ws.input_b->_begy = size.ws_row - 3;
 		g_env.ws.sidebar_b->_begx = size.ws_col - sidebar_w;
 		g_env.ws.input->_begy = size.ws_row - 2;
@@ -88,12 +107,14 @@ void			resize_curses(int sig)
 		werase(g_env.ws.sidebar_b);
 		werase(g_env.ws.chat_b);
 		box(g_env.ws.chat_b, 0, 0);
+		box(g_env.ws.input_b, 0, 0);
 		box(g_env.ws.sidebar_b, 0, 0);
 		wrefresh(g_env.ws.chat_b);
 		mvwprintw(g_env.ws.sidebar_b, 0, (sidebar_w - 6) / 2, "Online");
 		wrefresh(g_env.ws.sidebar_b);
 		if (g_env.layot.chat_offset + g_env.ws.chat->_maxy > g_env.chat_history.size)
 			g_env.layot.chat_offset = 0;
+		display_users_online();
 		display_chat();
 	}
 }

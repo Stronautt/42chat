@@ -44,7 +44,7 @@ void		ft_putnnp_l(char const *s, size_t len)
 		if (!ft_isprint(*s))
 			nonprint_helper(*s++, &ft_tolower);
 		else
-			write(1, s++, 1);
+			tmpl = write(1, s++, 1);
 }
 
 void		ft_putnnp_u(char const *s, size_t len)
@@ -59,5 +59,5 @@ void		ft_putnnp_u(char const *s, size_t len)
 		if (!ft_isprint(*s))
 			nonprint_helper(*s++, &ft_toupper);
 		else
-			write(1, s++, 1);
+			tmpl = write(1, s++, 1);
 }

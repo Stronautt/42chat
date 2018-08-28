@@ -28,6 +28,9 @@
 
 # define SELF_POINT "\02"
 
+# define TERM_MIN_WIDTH 40
+# define TERM_MIN_HEIGHT 8
+
 # define C_COLOR_RED 1
 # define C_COLOR_CYAN 2
 # define C_COLOR_GREEN 3
@@ -57,6 +60,8 @@ typedef struct	s_buffer
 typedef struct	s_env
 {
 	struct event		ev_getmsg;
+	struct event		ev_input;
+	struct event		ev_update;
 	int					sockfd;
 	char				* nickname;
 	char				* room_name;
@@ -65,15 +70,20 @@ typedef struct	s_env
 	t_buffer			chat_history;
 	t_buffer			users_online;
 	t_workspaces		ws;
+	struct winsize		term_size;
 	struct sockaddr_in	conn_data;
 }				t_env;
 
 extern char		* g_error;
 extern t_env	g_env;
 
+void			update_online_users(void);
+
 int				try_reconnect(void);
 
 void			resize_curses(int sig);
+
+void			display_users_online(void);
 
 void			display_chat(void);
 

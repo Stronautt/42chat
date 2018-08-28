@@ -20,10 +20,11 @@ const char		* get_error(void)
 	return (g_error ? g_error : "Unkown error!");
 }
 
-void			set_error(const char * msg)
+int				set_error(const char * msg)
 {
 	g_error ? ft_memdel((void **)&g_error) : 0;
 	g_error = ft_strdup(msg);
+	return (-1);
 }
 
 void			get_messages(int fd, short ev, void *data)
@@ -33,12 +34,12 @@ void			get_messages(int fd, short ev, void *data)
 	t_dlist			* lines;
 	t_dlist			* tmp;
 
-	(void)fd;
 	(void)ev;
 	(void)data;
 	if (recieve_data(fd, (void **)&buffer, MSG_WAITALL) < 0)
 		return ;
 	lines = ft_strsplit_dlst(buffer, '\n');
+	free(buffer);
 	tmp = lines;
 	while (tmp && (tmp = tmp->next) != lines)
 		if ((point = ft_strchr(tmp->content, '\a')))
@@ -49,37 +50,24 @@ void			get_messages(int fd, short ev, void *data)
 		}
 	g_env.chat_history.size += ft_dlstsize(lines);
 	ft_dlstmerge(&g_env.chat_history.lines, &lines);
-	free(buffer);
 	display_chat();
 }
 
-int				init_socket(struct sockaddr_in * conn_data, const char * server_ip)
+int				init_socket(struct sockaddr_in * c_data, const char * server_ip)
 {
 	int		ret_fd;
 
 	if ((ret_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
-	{
-		set_error("Unable to create socket");
-		return (-1);
-	}
-	memset(conn_data, '0', sizeof(*conn_data));
-	conn_data->sin_family = AF_INET;
-	conn_data->sin_port = htons(PORT);
-	if(inet_pton(AF_INET, server_ip, &conn_data->sin_addr) <= 0)
-	{
-		set_error("Invalid address");
-		return (-1);
-	}
-	else if (connect(ret_fd, (struct sockaddr *)conn_data, sizeof(*conn_data)) < 0)
-	{
-		set_error("Couldn't connect to server, try again later.\n");
-		return (-1);
-	}
+		return (set_error("Unable to create socket"));
+	memset(c_data, '0', sizeof(*c_data));
+	c_data->sin_family = AF_INET;
+	c_data->sin_port = htons(PORT);
+	if(inet_pton(AF_INET, server_ip, &c_data->sin_addr) <= 0)
+		return (set_error("Invalid address"));
+	else if (connect(ret_fd, (struct sockaddr *)c_data, sizeof(*c_data)) < 0)
+		return (set_error("Couldn't connect to server, try again later.\n"));
 	else if (send_command(ret_fd, CONNECT, 0) < 0)
-	{
-		set_error("Couldn't send data to server, try again later.\n");
-		return (-1);
-	}
+		return (set_error("Couldn't send data to server, try again later.\n"));
 	return (ret_fd);
 }
 
@@ -111,7 +99,7 @@ static void			get_startup_data(void)
 	char	* trash;
 
 	handle_input(0, 0, true);
-	nodelay(g_env.ws.input, TRUE);
+	nodelay(g_env.ws.input, true);
 	while (recieve_data(g_env.sockfd, (void **)&tmp, MSG_WAITALL) > 0)
 	{
 		if (!*tmp)
@@ -130,25 +118,61 @@ static void			get_startup_data(void)
 	display_chat();
 }
 
+// Online users in 'general' room (1):
+// Pavel.
+
+void			update_online_users(void)
+{
+	const char	* command = "/online";
+	char		* response;
+
+	if (stdscr->_maxx <= TERM_MIN_WIDTH || stdscr->_maxy <= TERM_MIN_HEIGHT)
+		return ;
+	event_del(&g_env.ev_getmsg);
+	send_data(g_env.sockfd, command, ft_strlen(command) + 1, 0);
+	recieve_data(g_env.sockfd, (void **)&response, MSG_WAITALL);
+	free(g_env.room_name);
+	g_env.room_name = ft_get_content(response, '\'', '\'');
+	free(response);
+	display_users_online();
+	event_set(&g_env.ev_getmsg, g_env.sockfd,
+				EV_READ | EV_PERSIST, get_messages, NULL);
+	event_add(&g_env.ev_getmsg, NULL);
+}
+
+void			initialize_events(void)
+{
+	struct timeval	* timer;
+
+	timer = malloc(sizeof(struct timeval));
+	bzero(timer, sizeof(struct timeval));
+	timer->tv_sec = 1;
+	event_set(&g_env.ev_update, 0, EV_PERSIST,
+				(void (*)(int, short, void *))update_online_users, NULL);
+	evtimer_add(&g_env.ev_update, timer);
+	event_set(&g_env.ev_getmsg, g_env.sockfd,
+				EV_READ | EV_PERSIST, get_messages, NULL);
+	event_add(&g_env.ev_getmsg, NULL);
+	event_set(&g_env.ev_input, 0, EV_WRITE | EV_PERSIST,
+				(void (*)(int, short, void *))handle_input, NULL);
+	event_add(&g_env.ev_input, NULL);
+	update_online_users();
+}
+
 int				main(int ac, char **av)
 {
-	struct event ev_input;
-
+	setlocale(LC_ALL, "");
 	bzero(&g_env, sizeof(t_env));
 	if (ac < 2)
 		return (ft_printf("Usage: ./42chat [server_ip_address]\n") * 0 + EXIT_FAILURE);
 	else if ((g_env.sockfd = init_socket(&g_env.conn_data, av[1])) < 0)
 		return (ft_printf("%s\n", get_error()) * 0 + EXIT_FAILURE);
 	signal(SIGPIPE, SIG_IGN);
-	setlocale(LC_ALL, "");
 	event_init();
 	init_design();
 	get_startup_data();
-	event_set(&g_env.ev_getmsg, g_env.sockfd, EV_READ|EV_PERSIST, get_messages, NULL);
-	event_add(&g_env.ev_getmsg, NULL);
-	event_set(&ev_input, 0, EV_READ | EV_PERSIST, (void (*)(evutil_socket_t, short, void *))handle_input, NULL);
-	event_add(&ev_input, NULL);
-	event_dispatch();
+	initialize_events();
+	event_loop(0);
 	curses_exit(NULL, NULL);
 	return (0);
 }

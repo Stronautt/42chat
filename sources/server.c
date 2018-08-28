@@ -10,7 +10,6 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "node.h"
 #include "server.h"
 
 # define LOG_ERR_PATH "./logs/log_errs.txt"
@@ -349,8 +348,6 @@ void			*handle_client(t_dlist * client_node)
 		ft_dlstpush(&g_clients, client_node);
 		pthread_mutex_unlock(&g_mutex);
 		log_client_actions(client, sys_act, public_act);
-		show_users_in_room(client);
-		show_help(client);
 		trace_income_msgs(client);
 	}
 	pthread_cleanup_pop(1);

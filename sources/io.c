@@ -6,7 +6,7 @@
 /*   By: phrytsenko                                                           */
 /*                                                                            */
 /*   Created: 2018/08/23 17:00:56 by phrytsenko                               */
-/*   Updated: 2018/08/27 18:43:58 by phrytsenko                               */
+/*   Updated: 2018/08/28 15:28:29 by phrytsenko                               */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,12 +24,17 @@ static int		readline_input_avail(void)
 static int		readline_getc(FILE *dummy)
 {
 	(void)dummy;
+	if ((g_env.term_size.ws_col < TERM_MIN_WIDTH
+		|| g_env.term_size.ws_row < TERM_MIN_HEIGHT)
+		&& !beep())
+		return (0);
 	g_prevent_update = false;
 	if (!good_connection(g_env.sockfd))
 	{
 		g_env.connection_lost = 1;
 		display_chat();
-		while (try_reconnect() < 0);
+		while (try_reconnect() < 0)
+			;
 		g_env.connection_lost = 0;
 	}
 	else if (g_env.connection_lost)
@@ -68,6 +73,11 @@ static void		proceed_nickname(char *nickname)
 
 static void		got_command(char *line)
 {
+	if (g_env.term_size.ws_col < TERM_MIN_WIDTH || g_env.term_size.ws_row < TERM_MIN_HEIGHT)
+	{
+		free(line);
+		return ;
+	}
 	g_prevent_update = false;
 	if (line && *line && !g_env.nickname)
 		proceed_nickname(line);
@@ -76,6 +86,9 @@ static void		got_command(char *line)
 		char	tag[128];
 		char	* trimmed;
 
+		trimmed = ft_strtrim(line);
+		free(line);
+		line = trimmed;
 		if (!(trimmed = ft_strsub(line, 0, ft_cinustrcn(line, MSG_MAX_LEN))))
 			return ;
 		sprintf(tag, "["SELF_POINT"%s]: ", g_env.nickname);
@@ -86,7 +99,7 @@ static void		got_command(char *line)
 		{
 			g_env.connection_lost = 1;
 			display_chat();
-			while (try_reconnect() < 0);
+			while (try_reconnect() < 0 || send_data(g_env.sockfd, trimmed, ft_strlen(trimmed) + 1, 0) < 0);
 			g_env.connection_lost = 0;
 		}
 		display_chat();
@@ -96,24 +109,25 @@ static void		got_command(char *line)
 
 static void		readline_redisplay(void)
 {
-	if (g_prevent_update)
+	if (g_prevent_update || g_env.term_size.ws_col < TERM_MIN_WIDTH || g_env.term_size.ws_row < TERM_MIN_HEIGHT)
 		return ;
+	char	* trimmed = ft_strtrim(rl_line_buffer);
 	size_t	cursor_col = ft_cinustrn(rl_line_buffer, rl_point);
 	size_t	offset_x = cursor_col % (g_env.ws.input->_maxx + 1);
 	size_t	mult_x = cursor_col / (g_env.ws.input->_maxx + 1) * (g_env.ws.input->_maxx + 1);
-	size_t	rl_line_buffer_len = ft_cinustr(rl_line_buffer);
+	size_t	rl_line_buffer_len = ft_cinustr(trimmed);
 	char	* msg = ft_strsub(rl_line_buffer, ft_cinustrcn(rl_line_buffer, mult_x),
 							rl_point + ft_cinustrcn(rl_line_buffer + rl_point, g_env.ws.input->_maxx - offset_x + 1));
 
+	free(trimmed);
 	werase(g_env.ws.input);
-	werase(g_env.ws.input_b);
+	mvwhline(g_env.ws.input_b, 0, 1, 0, g_env.ws.input_b->_maxx - 1);
 	if ((g_env.nickname && rl_line_buffer_len > MSG_MAX_LEN) || (!g_env.nickname && rl_line_buffer_len > MAX_NICKNAME_LEN))
 		wattron(g_env.ws.input, COLOR_PAIR(C_COLOR_RED));
-	wprintw(g_env.ws.input, "%s", msg);
+	mvwprintw(g_env.ws.input, 0, 0, "%s", msg);
 	if ((g_env.nickname && rl_line_buffer_len > MSG_MAX_LEN) || (!g_env.nickname && rl_line_buffer_len > MAX_NICKNAME_LEN))
 		wattroff(g_env.ws.input, COLOR_PAIR(C_COLOR_RED));
 	free(msg);
-	box(g_env.ws.input_b, 0, 0);
 	if (!g_env.nickname)
 		mvwprintw(g_env.ws.input_b, 0, 1, "Enter nickname (%d/%d)", rl_line_buffer_len, MAX_NICKNAME_LEN);
 	else if (g_env.connection_lost)
@@ -121,8 +135,8 @@ static void		readline_redisplay(void)
 	else
 		mvwprintw(g_env.ws.input_b, 0, 1, "%s, %s (%d/%d)", rl_display_prompt, g_env.nickname, rl_line_buffer_len, MSG_MAX_LEN);
 	wrefresh(g_env.ws.input_b);
-	wrefresh(g_env.ws.input);
 	wmove(g_env.ws.input, 0, offset_x);
+	wrefresh(g_env.ws.input);
 }
 
 void			handle_input(int fd, short ev, bool block)
@@ -133,17 +147,17 @@ void			handle_input(int fd, short ev, bool block)
 		if (g_symb == 0x1b)
 		{
 			uint64_t	utf = 0;
+			int			_delay = g_env.ws.input->_delay;
 
 			((char *)&utf)[0] = g_symb;
+			nodelay(g_env.ws.input, true);
 			for (size_t it = 1; it < sizeof(uint64_t); it++)
 			{
-				if ((g_symb = wgetch(g_env.ws.input)) == 0x1b)
-				{
-					ungetch(g_symb);
+				if ((g_symb = wgetch(g_env.ws.input)) == 0x1b && ungetch(g_symb) == OK)
 					break ;
-				}
 				((char *)&utf)[it] = (g_symb == ERR ? 0 : g_symb);
 			}
+			g_env.ws.input->_delay = _delay;
 			switch (utf)
 			{
 				case RL_KEY_UP:
@@ -165,7 +179,8 @@ void			handle_input(int fd, short ev, bool block)
 					// display_chat();
 					break ;
 				case RL_KEY_ESC:
-					return ;
+					curses_exit(NULL, NULL);
+					break ;
 				default:
 					// For debug
 					// werase(g_env.ws.input);
@@ -184,9 +199,8 @@ void			handle_input(int fd, short ev, bool block)
 		}
 		else if (g_symb == KEY_RESIZE)
 			continue ;
-		else
+		else if ((g_input_avb = true))
 		{
-			g_input_avb = true;
 			rl_callback_read_char();
 			if (!block)
 				break ;

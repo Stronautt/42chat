@@ -13,6 +13,8 @@
 #ifndef SERVER_H
 # define SERVER_H
 
+# include "node.h"
+
 typedef struct	s_assocc
 {
 	char	* key;
@@ -24,7 +26,7 @@ typedef struct	s_client
 	int			sockfd;
 	uint8_t		silent_mode;
 	pthread_t	thread_data;
-	char		nickname[64];
+	char		nickname[(MAX_NICKNAME_LEN + 1) * 4];
 	t_dlist		* chat_room_node;
 	t_dlist		* node_in_room;
 }				t_client;

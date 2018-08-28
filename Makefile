@@ -13,12 +13,12 @@
 NAME_1		=	chat_server
 NAME_2		=	42chat
 
-CC			=	clang
+CC			=	gcc
 
 CFLAGS		=	-g3
 CFLAGS		+=	-Wextra -Werror -Wall
 CFLAGS		+=	-g
-CFLAGS		+=	-O2 -flto=thin -fdata-sections -ffunction-sections
+CFLAGS		+=	-O2 -fdata-sections -ffunction-sections
 
 HDRSDIR		=	./includes
 

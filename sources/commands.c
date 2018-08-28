@@ -17,11 +17,11 @@ void	show_help(t_client * client)
 {
 	char	help_msg[] =
 		"\nAvaliable commands:\n"
-		"\t1. /help -> Displays all avaliable commands.\n"
-		"\t2. /silent -> To enable/disable sound on new messages.\n"
-		"\t3. /showrooms -> Displays all avaliable rooms.\n"
-		"\t4. /newroom [NAME] [PASSWORD]? -> Creates new room. Can be locked by [PASSWORD].\n"
-		"\t5. /joinroom [NAME] [PASSWORD]? -> Relocates you to specified room. If it's locked, [PASSWORD] required.\n"
+		"    1. /help -> Displays all avaliable commands.\n"
+		"    2. /silent -> To enable/disable sound on new messages.\n"
+		"    3. /showrooms -> Displays all avaliable rooms.\n"
+		"    4. /newroom [NAME] [PASSWORD]? -> Creates new room. Can be locked by [PASSWORD].\n"
+		"    5. /joinroom [NAME] [PASSWORD]? -> Relocates you to specified room. If it's locked, [PASSWORD] required.\n"
 		"\n";
 
 	send_data(client->sockfd, help_msg, sizeof(help_msg), 0);
@@ -196,6 +196,6 @@ void	join_chat_room(t_client * client, char ** args)
 	pthread_mutex_unlock(&g_mutex);
 	msg = "* You successfully entered the room *\n";
 	send_data(client->sockfd, msg, ft_strlen(msg) + 1, 0);
-	sync_chat_history(client);
+	// sync_chat_history(client);
 	log_client_actions(client, "ENTERED_ROOM", "entered the room");
 }

@@ -16,7 +16,7 @@ void	ft_putstr(char const *s)
 {
 	if (!s)
 		return (ft_putstr("(null)"));
-	write(1, s, ft_strlen(s));
+	s = (char const *)write(1, s, ft_strlen(s));
 }
 
 void	ft_putustr(t_wint const *s)
@@ -35,7 +35,7 @@ void	ft_putnstr(char const *s, size_t len)
 		return (ft_putstr("(null)"));
 	tmp = ft_strlen(s);
 	len > tmp ? len = tmp : 0;
-	write(1, s, len);
+	tmp = write(1, s, len);
 }
 
 void	ft_putunstr(t_wint const *s, size_t len)

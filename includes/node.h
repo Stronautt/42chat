@@ -34,8 +34,11 @@
 
 # define PORT 2089
 
+# define MSG_POINT "\03"
+
 # define MSG_MAX_LEN 255
 # define MAX_NICKNAME_LEN 15
+
 typedef enum	e_command
 {
 	CONNECT = 1, RECONNECT
