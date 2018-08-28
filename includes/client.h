@@ -61,7 +61,6 @@ typedef struct	s_env
 {
 	struct event		ev_getmsg;
 	struct event		ev_input;
-	struct event		ev_update;
 	int					sockfd;
 	char				* nickname;
 	char				* room_name;

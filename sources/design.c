@@ -128,7 +128,7 @@ void			init_design(void)
 	noecho();
 	signal(SIGWINCH, resize_curses);
 	if (has_colors() == false)
-		curses_exit((void (*)())printf, "Your terminal does not support color\n");
+		curses_exit((void (*)())ft_printf, "Your terminal does not support color\n");
 	start_color();
 	init_pair(C_COLOR_RED, COLOR_RED, COLOR_BLACK);
 	init_pair(C_COLOR_CYAN, COLOR_CYAN, COLOR_BLACK);
@@ -151,4 +151,5 @@ int				curses_exit(void (*clear_callback)(), void * callback_data)
 	endwin();
 	clear_callback ? clear_callback(callback_data) : 0;
 	exit(0);
+	return (-1);
 }

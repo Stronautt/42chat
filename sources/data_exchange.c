@@ -12,6 +12,12 @@
 
 #include "node.h"
 
+static int	_clean(void * data)
+{
+	free(data);
+	return (-1);
+}
+
 int		good_connection(int sockfd)
 {
 	int			error = 0;
@@ -30,7 +36,7 @@ uint64_t	hash_data(const void * data, size_t size)
 	unsigned char	* tmp = (unsigned char *)data;
 	int				c;
 
-	if (!data)
+	if (!data || !size)
 		return (0);
 	while (size--)
 	{
@@ -40,54 +46,49 @@ uint64_t	hash_data(const void * data, size_t size)
 	return (hash);
 }
 
-ssize_t		send_data(int sockfd, const void * data, size_t size, int flags)
+ssize_t		send_data(int sockfd, const void * data, size_t size, t_command command)
 {
-	uint64_t	hash = hash_data(data, size);
+	ssize_t			ret;
+	uint64_t		hash = hash_data(data, size);
+	unsigned char	*msg = malloc(size + sizeof(t_command));
 
+	ft_memcpy(msg, &command, sizeof(t_command));
+	ft_memcpy(msg + sizeof(t_command), data, size);
 	if (!good_connection(sockfd))
-		return (-1);
-	else if (size > INT16_MAX || !size)
-		return (-1);
-	else if (send(sockfd, &size, sizeof(size), flags) < 0)
-		return (-1);
-	else if (send(sockfd, &hash, sizeof(hash), flags) < 0)
-		return (-1);
-	return (send(sockfd, data, size, flags));
-}
-
-ssize_t		send_command(int sockfd, t_command command, int flags)
-{
-	if (!good_connection(sockfd))
-		return (-1);
-	return (send(sockfd, &command, sizeof(command), flags));
-}
-
-ssize_t		recieve_data(int sockfd, void ** data, int flags)
-{
-	uint64_t	recieved_hash = 0;
-	size_t		size = 0;
-	ssize_t		ret = 0;
-
-	if (!good_connection(sockfd))
-		return (-1);
-	else if (recv(sockfd, &size, sizeof(size), flags) < 0)
-		return (-1);
-	else if (size > INT16_MAX || size <= 0)
-		return (-1);
-	else if (recv(sockfd, &recieved_hash, sizeof(recieved_hash), flags) < 0)
-		return (-1);
-	else if (!(*data = ft_memalloc(size)))
-		return (-1);
-	else if ((ret = recv(sockfd, *data, size, flags)) < 0)
-		return (-1);
-	else if (recieved_hash != hash_data(*data, size))
-		return (-1);
+		return (_clean(msg));
+	else if (size > INT16_MAX)
+		return (_clean(msg));
+	else if (send(sockfd, &size, sizeof(size), 0) < 0)
+		return (_clean(msg));
+	else if (send(sockfd, &hash, sizeof(hash), 0) < 0)
+		return (_clean(msg));
+	ret = send(sockfd, msg, size + sizeof(t_command), 0);
+	free(msg);
 	return (ret);
 }
 
-ssize_t		recieve_command(int sockfd, t_command * data, int flags)
+ssize_t		recieve_data(int sockfd, void ** data, t_command * command, int fl)
 {
+	unsigned char	*msg;
+	uint64_t		hash = 0;
+	size_t			size = 0;
+	ssize_t			ret = 0;
+
+	data ? *data = 0 : 0;
 	if (!good_connection(sockfd))
 		return (-1);
-	return (recv(sockfd, data, sizeof(*data), flags));
+	else if (recv(sockfd, &size, sizeof(size), fl) < 0)
+		return (-1);
+	else if (size > INT16_MAX || recv(sockfd, &hash, sizeof(hash), fl) < 0)
+		return (-1);
+	else if (!(msg = ft_memalloc(size + sizeof(t_command))))
+		return (-1);
+	else if ((ret = recv(sockfd, msg, size + sizeof(t_command), fl)) < 0)
+		return (_clean(msg));
+	else if (hash != hash_data(msg + sizeof(t_command), size))
+		return (_clean(msg));
+	command ? ft_memcpy(command, msg, sizeof(t_command)) : 0;
+	data && size ? ft_memcpy((*data = malloc(size)), msg + sizeof(t_command), size) : 0;
+	free(msg);
+	return (ret);
 }

@@ -53,13 +53,9 @@ int				good_connection(int sockfd);
 
 uint64_t		hash_data(const void * data, size_t size);
 
-ssize_t			send_data(int sockfd, const void * data, size_t size, int flags);
+ssize_t			send_data(int sockfd, const void * data, size_t size, t_command command);
 
-ssize_t			send_command(int sockfd, t_command command, int flags);
-
-ssize_t			recieve_data(int sockfd, void ** data, int flags);
-
-ssize_t			recieve_command(int sockfd, t_command * data, int flags);
+ssize_t			recieve_data(int sockfd, void ** data, t_command * command, int flags);
 
 /*
 **				Data_validation.c

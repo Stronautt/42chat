@@ -36,7 +36,7 @@ void			get_messages(int fd, short ev, void *data)
 
 	(void)ev;
 	(void)data;
-	if (recieve_data(fd, (void **)&buffer, MSG_WAITALL) < 0)
+	if (recieve_data(fd, (void **)&buffer, 0, MSG_WAITALL) <= 0)
 		return ;
 	lines = ft_strsplit_dlst(buffer, '\n');
 	free(buffer);
@@ -66,7 +66,7 @@ int				init_socket(struct sockaddr_in * c_data, const char * server_ip)
 		return (set_error("Invalid address"));
 	else if (connect(ret_fd, (struct sockaddr *)c_data, sizeof(*c_data)) < 0)
 		return (set_error("Couldn't connect to server, try again later.\n"));
-	else if (send_command(ret_fd, CONNECT, 0) < 0)
+	else if (send_data(ret_fd, 0, 0, CONNECT) < 0)
 		return (set_error("Couldn't send data to server, try again later.\n"));
 	return (ret_fd);
 }
@@ -79,7 +79,7 @@ int				try_reconnect(void)
 	else if (connect(g_env.sockfd, (struct sockaddr *)&g_env.conn_data,
 						sizeof(g_env.conn_data)) < 0)
 		return (-1);
-	else if (send_command(g_env.sockfd, RECONNECT, 0) < 0)
+	else if (send_data(g_env.sockfd, 0, 0, RECONNECT) < 0)
 		return (-1);
 	else if (send_data(g_env.sockfd, g_env.nickname,
 						ft_strlen(g_env.nickname) + 1, 0) < 0)
@@ -88,7 +88,7 @@ int				try_reconnect(void)
 	event_set(&g_env.ev_getmsg, g_env.sockfd, EV_READ|EV_PERSIST, get_messages, NULL);
 	event_add(&g_env.ev_getmsg, NULL);
 	ft_memdel((void**)&g_env.nickname);
-	recieve_data(g_env.sockfd, (void **)&g_env.nickname, 0);
+	recieve_data(g_env.sockfd, (void **)&g_env.nickname, 0, MSG_WAITALL);
 	return (1);
 }
 
@@ -100,7 +100,7 @@ static void			get_startup_data(void)
 
 	handle_input(0, 0, true);
 	nodelay(g_env.ws.input, true);
-	while (recieve_data(g_env.sockfd, (void **)&tmp, MSG_WAITALL) > 0)
+	while (recieve_data(g_env.sockfd, (void **)&tmp, 0, MSG_WAITALL) > 0)
 	{
 		if (!*tmp)
 		{
@@ -121,42 +121,33 @@ static void			get_startup_data(void)
 // Online users in 'general' room (1):
 // Pavel.
 
-void			update_online_users(void)
-{
-	const char	* command = "/online";
-	char		* response;
+// void			update_online_users(void)
+// {
+// 	const char	* command = "/online";
+// 	char		* response;
 
-	if (stdscr->_maxx <= TERM_MIN_WIDTH || stdscr->_maxy <= TERM_MIN_HEIGHT)
-		return ;
-	event_del(&g_env.ev_getmsg);
-	send_data(g_env.sockfd, command, ft_strlen(command) + 1, 0);
-	recieve_data(g_env.sockfd, (void **)&response, MSG_WAITALL);
-	free(g_env.room_name);
-	g_env.room_name = ft_get_content(response, '\'', '\'');
-	free(response);
-	display_users_online();
-	event_set(&g_env.ev_getmsg, g_env.sockfd,
-				EV_READ | EV_PERSIST, get_messages, NULL);
-	event_add(&g_env.ev_getmsg, NULL);
-}
+// 	if (stdscr->_maxx <= TERM_MIN_WIDTH || stdscr->_maxy <= TERM_MIN_HEIGHT)
+// 		return ;
+// 	event_del(&g_env.ev_getmsg);
+// 	send_data(g_env.sockfd, command, ft_strlen(command) + 1, 0);
+// 	recieve_data(g_env.sockfd, (void **)&response, 0, MSG_WAITALL);
+// 	free(g_env.room_name);
+// 	g_env.room_name = ft_get_content(response, '\'', '\'');
+// 	free(response);
+// 	display_users_online();
+// 	event_set(&g_env.ev_getmsg, g_env.sockfd,
+// 				EV_READ | EV_PERSIST, get_messages, NULL);
+// 	event_add(&g_env.ev_getmsg, NULL);
+// }
 
 void			initialize_events(void)
 {
-	struct timeval	* timer;
-
-	timer = malloc(sizeof(struct timeval));
-	bzero(timer, sizeof(struct timeval));
-	timer->tv_sec = 1;
-	event_set(&g_env.ev_update, 0, EV_PERSIST,
-				(void (*)(int, short, void *))update_online_users, NULL);
-	evtimer_add(&g_env.ev_update, timer);
 	event_set(&g_env.ev_getmsg, g_env.sockfd,
 				EV_READ | EV_PERSIST, get_messages, NULL);
 	event_add(&g_env.ev_getmsg, NULL);
 	event_set(&g_env.ev_input, 0, EV_WRITE | EV_PERSIST,
 				(void (*)(int, short, void *))handle_input, NULL);
 	event_add(&g_env.ev_input, NULL);
-	update_online_users();
 }
 
 int				main(int ac, char **av)

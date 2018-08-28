@@ -6,7 +6,7 @@
 /*   By: phrytsenko                                                           */
 /*                                                                            */
 /*   Created: 2018/08/23 17:00:56 by phrytsenko                               */
-/*   Updated: 2018/08/28 15:28:29 by phrytsenko                               */
+/*   Updated: 2018/08/28 17:51:29 by phrytsenko                               */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -64,8 +64,10 @@ static void		proceed_nickname(char *nickname)
 	}
 	else
 	{
-		send_data(g_env.sockfd, nickname, ft_strlen(nickname) + 1, 0);
-		recieve_data(g_env.sockfd, (void **)&g_env.nickname, 0);
+		if (send_data(g_env.sockfd, nickname, ft_strlen(nickname) + 1, 0) < 0)
+			return ;
+		else if (recieve_data(g_env.sockfd, (void **)&g_env.nickname, 0, MSG_WAITALL) < 0)
+			return ;
 		display_chat();
 		ungetch(ERR);
 	}

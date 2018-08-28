@@ -156,7 +156,7 @@ void			get_nickname(t_client * client)
 	char		* raw;
 	char		* trimmed;
 
-	if (recieve_data(client->sockfd, (void **)&ret, MSG_WAITALL) < 0)
+	if (recieve_data(client->sockfd, (void **)&ret, 0, MSG_WAITALL) < 0)
 		pthread_exit(NULL);
 	else if (!(raw = ft_strsub(ret, 0, ft_cinustrcn(ret, MAX_NICKNAME_LEN))))
 		pthread_exit(NULL);
@@ -271,7 +271,7 @@ void			trace_income_msgs(t_client * client)
 	char		* msg;
 	char		* public_msg;
 
-	while ((msg_l = recieve_data(client->sockfd, (void **)&msg, MSG_WAITALL)) > 0)
+	while ((msg_l = recieve_data(client->sockfd, (void **)&msg, 0, MSG_WAITALL)) > 0)
 	{
 		t_chat_room	* chat_room = client->chat_room_node->content;
 		t_dlist		* clients = chat_room->users;
@@ -321,7 +321,7 @@ void			*handle_client(t_dlist * client_node)
 	char		* public_act;
 
 	pthread_cleanup_push((void (*)(void *))&disconnect_client, client_node);
-	if (recieve_command(client->sockfd, &cmd, MSG_WAITALL) > 0)
+	if (recieve_data(client->sockfd, 0, &cmd, MSG_WAITALL) > 0)
 	{
 		client->chat_room_node = g_chat_rooms->next;
 		if (cmd == CONNECT)
