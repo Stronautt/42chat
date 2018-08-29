@@ -190,7 +190,7 @@ void			get_nickname(t_client * client)
 	send_data(client->sockfd, client->nickname, sizeof(client->nickname), 0);
 }
 
-int				validate_msg(char * msg)
+int				msg_valid(char * msg)
 {
 	ssize_t 		len = ft_cinustr(msg);
 	unsigned char	*p_s = (unsigned char *)msg;
@@ -207,11 +207,8 @@ int				validate_msg(char * msg)
 			len -= 3;
 		else if (*p_s >= 0xF0 && *p_s <= 0xF4 && (p_s += 3))
 			len -= 4;
-		else
-		{
+		else if (len--)
 			!ft_isprint(*p_s++) ? *p_s = '*' : 0;
-			len--;
-		}
 	return (1);
 }
 
@@ -325,13 +322,13 @@ uint8_t			treated_as_command(char * msg, ssize_t msg_l, t_client * client)
 
 void			send_msg(t_client * client, char * msg, ssize_t msg_l)
 {
+	char	*trash;
+
 	if (!client || !msg)
 		return ;
 	else if (!client->silent_mode)
 	{
-		char	* trash;
-
-		if (!(trash = ft_strjoin(msg, "\a")))
+		if (!(trash = ft_strjoin("\a", msg)))
 			return ;
 		send_data(client->sockfd, trash, msg_l + 2, 0);
 		free(trash);
@@ -352,7 +349,7 @@ void			trace_income_msgs(t_client * client)
 		t_chat_room	* chat_room = client->chat_room_node->content;
 		t_dlist		* clients = chat_room->users;
 
-		if (validate_msg(msg) < 0)
+		if (msg_valid(msg) < 0)
 		{
 			ft_memdel((void **)&msg);
 			continue ;

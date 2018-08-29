@@ -44,6 +44,13 @@ typedef enum	e_command
 	NO_CMD = 0, UPDATE_USERS, UPDATE_ROOMS, UPDATE_HISTORY
 }				t_command;
 
+typedef struct	s_packet
+{
+	size_t		size;
+	uint64_t	crs_sum;
+	t_command	cmd;
+}				t_packet;
+
 /*
 **				Data_exchange.c
 **				↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
@@ -63,6 +70,8 @@ ssize_t			recieve_data(int sockfd, void ** data, t_command * command, int flags)
 */
 
 int				nickname_is_valid(const char * nickname);
+
+int				_clean(void *data);
 
 size_t			splitted_size(char ** parts);
 

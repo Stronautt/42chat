@@ -19,8 +19,10 @@ void	show_help(t_client * client)
 		"\nAvaliable commands:\n"
 		"    1. /help -> Displays all avaliable commands.\n"
 		"    2. /silent -> To enable/disable sound on new messages.\n"
-		"    3. /newroom [NAME] [PASSWORD]? -> Creates new room. Can be locked by [PASSWORD].\n"
-		"    4. /joinroom [NAME] [PASSWORD]? -> Relocates you to specified room. If it's locked, [PASSWORD] required.\n"
+		"    3. /newroom [NAME] [PASSWORD]? -> Creates new room. "
+		"Can be locked by [PASSWORD].\n"
+		"    4. /joinroom [NAME] [PASSWORD]? -> Relocates you to specified room."
+		" If it's locked, [PASSWORD] required.\n"
 		"\n";
 
 	send_data(client->sockfd, help_msg, sizeof(help_msg), 0);
@@ -33,10 +35,9 @@ void	toogle_silent_mode(t_client * client)
 
 	client->silent_mode ^= 1;
 	((t_client *)client->node_in_room->content)->silent_mode ^= 1;
-	if (client->silent_mode)
-		send_data(client->sockfd, msg_e, sizeof(msg_e), 0);
-	else
-		send_data(client->sockfd, msg_d, sizeof(msg_d), 0);
+	client->silent_mode
+		? send_data(client->sockfd, msg_e, sizeof(msg_e), 0)
+		: send_data(client->sockfd, msg_d, sizeof(msg_d), 0);
 }
 
 void	create_chat_room(t_client * client, char ** args)

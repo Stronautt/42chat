@@ -24,30 +24,21 @@ void			proceed_cmds(t_command cmd, char * data)
 		update_chat_history(data);
 }
 
-void			get_messages(int fd, short ev, void *data)
+void			get_messages(void)
 {
 	char			* buffer;
 	char			* point;
 	t_dlist			* lines;
-	t_dlist			* tmp;
 	t_command		cmd;
 
-	(void)ev;
-	(void)data;
-	if (recieve_data(fd, (void **)&buffer, &cmd, MSG_WAITALL) <= 0)
+	if (recieve_data(g_env.sockfd, (void **)&buffer,
+						&cmd, MSG_WAITALL) <= 0)
 		return ;
 	else if (cmd != NO_CMD)
 		return (proceed_cmds(cmd, buffer));
-	lines = ft_strsplit_dlst(buffer, '\n');
+	point = *buffer == '\a' && !beep() ? buffer + 1 : buffer;
+	lines = ft_strsplit_dlst(ft_str_replace(point, '\t', ' '), '\n');
 	free(buffer);
-	tmp = lines;
-	while (tmp && (tmp = tmp->next) != lines)
-		if ((point = ft_strchr(tmp->content, '\a')))
-		{
-			g_env.layot.chat_offset = 0;
-			beep();
-			ft_strclr(point);
-		}
 	g_env.chat_history.size += ft_dlstsize(lines);
 	ft_dlstmerge(&g_env.chat_history.lines, &lines);
 	display_chat();
@@ -55,20 +46,24 @@ void			get_messages(int fd, short ev, void *data)
 
 char			*init_socket(struct sockaddr_in * c_data, const char * server_ip)
 {
+	const size_t	c_data_l = sizeof(struct sockaddr_in);
+
 	if ((g_env.sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
 		return ("Unable to create socket");
-	memset(c_data, '0', sizeof(*c_data));
+	memset(c_data, '0', c_data_l);
 	c_data->sin_family = AF_INET;
 	c_data->sin_port = htons(PORT);
 	if(inet_pton(AF_INET, server_ip, &c_data->sin_addr) <= 0)
 		return ("Invalid address");
-	else if (connect(g_env.sockfd, (struct sockaddr *)c_data, sizeof(*c_data)) < 0)
+	else if (connect(g_env.sockfd, (struct sockaddr *)c_data, c_data_l) < 0)
 		return ("Couldn't connect to server, try again later.\n");
 	return (0);
 }
 
 int				try_reconnect(void)
 {
+	char	cmd[256];
+
 	close(g_env.sockfd);
 	if ((g_env.sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
 		return (-1);
@@ -80,11 +75,12 @@ int				try_reconnect(void)
 		return (-1);
 	event_del(&g_env.ev_getmsg);
 	event_set(&g_env.ev_getmsg, g_env.sockfd, EV_READ | EV_PERSIST,
-				get_messages, NULL);
+				(void (*)(int, short, void *))&get_messages, NULL);
 	event_add(&g_env.ev_getmsg, NULL);
 	ft_memdel((void**)&g_env.nickname);
 	recieve_data(g_env.sockfd, (void **)&g_env.nickname, 0, MSG_WAITALL);
-	return (1);
+	sprintf(cmd, "/joinroom %s", g_env.room_name);
+	return (send_data(g_env.sockfd, cmd, ft_strlen(cmd) + 1, 0) < 0 ? -1 : 1);
 }
 
 int				main(int ac, char **av)
@@ -102,11 +98,11 @@ int				main(int ac, char **av)
 	init_design();
 	handle_input(0, 0, true);
 	nodelay(g_env.ws.input, true);
-	event_set(&g_env.ev_getmsg, g_env.sockfd,
-				EV_READ | EV_PERSIST, get_messages, NULL);
+	event_set(&g_env.ev_getmsg, g_env.sockfd, EV_READ | EV_PERSIST,
+				(void (*)(int, short, void *))&get_messages, NULL);
 	event_add(&g_env.ev_getmsg, NULL);
 	event_set(&g_env.ev_input, 0, EV_WRITE | EV_PERSIST,
-				(void (*)(int, short, void *))handle_input, NULL);
+				(void (*)(int, short, void *))&handle_input, NULL);
 	event_add(&g_env.ev_input, NULL);
 	event_loop(0);
 	curses_exit(NULL, NULL);

@@ -14,7 +14,7 @@ NAME		= 	libft.a
 
 CC			= 	gcc
 
-CFLAGS		=	-Wextra -Werror -Wall -O2 -g3 -g
+CFLAGS		=	-Wextra -Werror -Wall -O2 -g3
 
 SRCS		= 	ft_lstnew.c ft_strcat.c ft_strncpy.c ft_memalloc.c ft_strchr.c		\
 				ft_strnequ.c ft_memccpy.c ft_strclr.c ft_strnew.c ft_atoi.c			\
@@ -38,7 +38,8 @@ SRCS		= 	ft_lstnew.c ft_strcat.c ft_strncpy.c ft_memalloc.c ft_strchr.c		\
 				ft_dlstdelelem.c ft_dlstsize.c ft_dlstpop.c ft_dlstpop_back.c		\
 				ft_dlstclear.c ft_get_fractional.c ft_get_content.c ft_atof.c		\
 				ft_memjoin.c ft_dlstindex.c ft_strsplit_dlst.c ft_clamp.c			\
-				ft_cinustr.c ft_cinustrn.c ft_cinustrcn.c ft_dlstmerge.c
+				ft_cinustr.c ft_cinustrn.c ft_cinustrcn.c ft_dlstmerge.c			\
+				ft_str_replace.c
 
 HDRS		=	ftprintf.h libft.h ftstring.h
 

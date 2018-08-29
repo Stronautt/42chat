@@ -21,56 +21,37 @@ static int		readline_input_avail(void)
 	return (g_input_avb);
 }
 
-static int		readline_getc(FILE *dummy)
+static int		readline_getc(void)
 {
-	(void)dummy;
-	if ((g_env.term_size.ws_col < TERM_MIN_WIDTH
+	if (g_env.term_size.ws_col < TERM_MIN_WIDTH
 		|| g_env.term_size.ws_row < TERM_MIN_HEIGHT)
-		&& !beep())
-		return (0);
+		return (beep() * 0);
 	g_prevent_update = false;
-	if (!good_connection(g_env.sockfd))
-	{
-		g_env.connection_lost = 1;
-		display_chat();
-		while (try_reconnect() < 0)
-			;
-		g_env.connection_lost = 0;
-	}
-	else if (g_env.connection_lost)
-	{
-		beep();
-		return (0);
-	}
+	if (g_env.connection_lost)
+		return (beep() * 0);
 	g_input_avb = false;
-	return (g_symb);
+	return (g_symb == '\t' ? ' ' : g_symb);
 }
 
 static void		proceed_nickname(char *nickname)
 {
-	if (ft_cinustr(nickname) > MAX_NICKNAME_LEN)
-	{
-		g_prevent_update = true;
-		werase(g_env.ws.input);
-		mvwprintw(g_env.ws.input, 0, 0, "* Nickname is too long *");
-		wrefresh(g_env.ws.input);
-	}
-	else if (!nickname_is_valid(nickname))
-	{
-		g_prevent_update = true;
-		werase(g_env.ws.input);
-		mvwprintw(g_env.ws.input, 0, 0, "* Invalid nickname *");
-		wrefresh(g_env.ws.input);
-	}
-	else
-	{
-		if (send_data(g_env.sockfd, nickname, ft_strlen(nickname) + 1, 0) < 0)
-			return ;
-		else if (recieve_data(g_env.sockfd, (void **)&g_env.nickname, 0, MSG_WAITALL) < 0)
-			return ;
-		display_chat();
-		ungetch(ERR);
-	}
+	char	*err;
+
+	err = "";
+	if (ft_cinustr(nickname) > MAX_NICKNAME_LEN && (g_prevent_update = true))
+		err = "* Nickname is too long *";
+	else if (!nickname_is_valid(nickname) && (g_prevent_update = true))
+		err = "* Invalid nickname *";
+	else if (send_data(g_env.sockfd, nickname, ft_strlen(nickname) + 1, 0) < 0)
+		return ;
+	else if (recieve_data(g_env.sockfd, (void **)&g_env.nickname,
+							0, MSG_WAITALL) < 0)
+		return ;
+	else if (ungetch(ERR) == OK)
+		return (display_chat());
+	werase(g_env.ws.input);
+	mvwprintw(g_env.ws.input, 0, 0, err);
+	wrefresh(g_env.ws.input);
 }
 
 static void		got_command(char *line)
@@ -91,8 +72,6 @@ static void		got_command(char *line)
 		if (!(trimmed = ft_strsub(line, 0, ft_cinustrcn(line, MSG_MAX_LEN))))
 			return (free(line));
 		sprintf(tag, "["SELF_POINT"%s]: ", g_env.nickname);
-		ft_dlstpush(&g_env.chat_history.lines, ft_dlstnew(ft_strjoin(tag, trimmed), sizeof(void *)));
-		g_env.chat_history.size++;
 		g_env.layot.chat_offset = 0;
 		if (send_data(g_env.sockfd, trimmed, ft_strlen(trimmed) + 1, 0) < 0)
 		{
@@ -101,6 +80,8 @@ static void		got_command(char *line)
 			while (try_reconnect() < 0 || send_data(g_env.sockfd, trimmed, ft_strlen(trimmed) + 1, 0) < 0);
 			g_env.connection_lost = 0;
 		}
+		ft_dlstpush(&g_env.chat_history.lines, ft_dlstnew(ft_strjoin(tag, trimmed), sizeof(void *)));
+		g_env.chat_history.size++;
 		display_chat();
 	}
 	free(line);
@@ -218,7 +199,7 @@ void			init_readline(void)
 	rl_prep_term_function = NULL;
 	rl_change_environment = 0;
 
-	rl_getc_function = readline_getc;
+	rl_getc_function = (int (*)(FILE *))&readline_getc;
 	rl_input_available_hook = readline_input_avail;
 	rl_redisplay_function = readline_redisplay;
 

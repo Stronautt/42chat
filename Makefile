@@ -17,7 +17,7 @@ CC			=	gcc
 
 CFLAGS		=	-g3
 CFLAGS		+=	-Wextra -Werror -Wall
-CFLAGS		+=	-g
+# CFLAGS		+=	-g
 CFLAGS		+=	-O2 -fdata-sections -ffunction-sections
 
 HDRSDIR		=	./includes

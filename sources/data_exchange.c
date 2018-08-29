@@ -12,12 +12,6 @@
 
 #include "node.h"
 
-static int	_clean(void * data)
-{
-	free(data);
-	return (-1);
-}
-
 int		good_connection(int sockfd)
 {
 	int			error = 0;
@@ -46,47 +40,40 @@ uint64_t	hash_data(const void * data, size_t size)
 	return (hash);
 }
 
-ssize_t		send_data(int sockfd, const void * data, size_t size, t_command command)
+ssize_t		send_data(int sockfd, const void * data,
+						size_t size, t_command command)
 {
-	ssize_t			ret;
-	uint64_t		hash = hash_data(data, size);
-	unsigned char	*msg = ft_memalloc(size + sizeof(t_command));
+	t_packet	packet;
 
-	ft_memcpy(msg, &command, sizeof(t_command));
-	ft_memcpy(msg + sizeof(t_command), data, size);
+	packet.size = size;
+	packet.cmd = command;
+	packet.crs_sum = hash_data(data, size);
 	if (!good_connection(sockfd))
-		return (_clean(msg));
-	else if (send(sockfd, &size, sizeof(size), 0) < 0)
-		return (_clean(msg));
-	else if (send(sockfd, &hash, sizeof(hash), 0) < 0)
-		return (_clean(msg));
-	ret = send(sockfd, msg, size + sizeof(t_command), 0);
-	free(msg);
-	return (ret);
+		return (-1);
+	else if (send(sockfd, &packet, sizeof(t_packet), 0) < 0)
+		return (-1);
+	return (send(sockfd, data, size, 0));
 }
 
-ssize_t		recieve_data(int sockfd, void ** data, t_command * command, int fl)
+ssize_t		recieve_data(int sockfd, void ** data,
+							t_command * command, int flags)
 {
-	unsigned char	*msg;
-	uint64_t		hash = 0;
-	size_t			size = 0;
-	ssize_t			ret = 0;
+	t_packet	packet;
+	ssize_t		ret;
+	void		* tmp;
 
 	data ? *data = 0 : 0;
 	if (!good_connection(sockfd))
 		return (-1);
-	else if (recv(sockfd, &size, sizeof(size), fl) < 0)
+	else if (recv(sockfd, &packet, sizeof(t_packet), flags) < 0)
 		return (-1);
-	else if (recv(sockfd, &hash, sizeof(hash), fl) < 0)
+	else if (!(tmp = ft_memalloc(packet.size)))
 		return (-1);
-	else if (!(msg = ft_memalloc(size + sizeof(t_command))))
-		return (-1);
-	else if ((ret = recv(sockfd, msg, size + sizeof(t_command), fl)) < 0)
-		return (_clean(msg));
-	else if (hash != hash_data(msg + sizeof(t_command), size))
-		return (_clean(msg));
-	command ? ft_memcpy(command, msg, sizeof(t_command)) : 0;
-	data && size ? ft_memcpy((*data = malloc(size)), msg + sizeof(t_command), size) : 0;
-	free(msg);
+	else if ((ret = recv(sockfd, tmp, packet.size, flags)) < 0)
+		return (_clean(tmp) - 1);
+	else if (packet.crs_sum != hash_data(tmp, packet.size))
+		return (_clean(tmp) - 1);
+	data ? *data = tmp : free(tmp);
+	command ? *command = packet.cmd : 0;
 	return (ret);
 }

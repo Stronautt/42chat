@@ -24,6 +24,12 @@ int		nickname_is_valid(const char * nickname)
 	return (1);
 }
 
+int		_clean(void *data)
+{
+	free(data);
+	return (0);
+}
+
 size_t	splitted_size(char ** parts)
 {
 	size_t	size = 0;

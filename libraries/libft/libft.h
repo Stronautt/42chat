@@ -147,6 +147,8 @@ int				ft_strcmp(const char *s1, const char *s2);
 
 int				ft_strncmp(const char *s1, const char *s2, size_t n);
 
+char			*ft_str_replace(char *src, char b, char t);
+
 int				ft_atoi(const char *s);
 
 intmax_t		ft_atol_base(const char *s, int base);
