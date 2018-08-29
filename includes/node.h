@@ -34,14 +34,14 @@
 
 # define PORT 2089
 
-# define MSG_POINT "\03"
+# define ROOM_LOCKED "\03"
 
 # define MSG_MAX_LEN 255
 # define MAX_NICKNAME_LEN 15
 
 typedef enum	e_command
 {
-	CONNECT = 1, RECONNECT
+	NO_CMD = 0, UPDATE_USERS, UPDATE_ROOMS, UPDATE_HISTORY
 }				t_command;
 
 /*

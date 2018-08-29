@@ -15,6 +15,8 @@
 
 # include "node.h"
 
+# define MAX_ROOMS_NUMBER 1024
+
 typedef struct	s_assocc
 {
 	char	* key;
@@ -50,9 +52,13 @@ extern pthread_mutex_t	g_mutex;
 
 void			log_client_actions(t_client * client, const char * status, const char * public_status);
 
-int				new_chat_room(char * name, char * passwd);
+int				new_chat_room(const char * name, const char * passwd);
 
 void			sync_chat_history(t_client * client);
+
+void			update_clients_data(t_chat_room * room);
+
+void			update_room_list(t_client * client);
 
 /*
 **				Commands.c
@@ -62,10 +68,6 @@ void			sync_chat_history(t_client * client);
 void			show_help(t_client * client);
 
 void			toogle_silent_mode(t_client * client);
-
-void			show_all_rooms(t_client * client);
-
-void			show_users_in_room(t_client * client);
 
 void			create_chat_room(t_client * client, char ** args);
 

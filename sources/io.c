@@ -1,12 +1,12 @@
 /* ************************************************************************** */
 /*                                                                            */
-/*                                                                            */
-/*   io.c                                                                     */
-/*                                                                            */
-/*   By: phrytsenko                                                           */
-/*                                                                            */
-/*   Created: 2018/08/23 17:00:56 by phrytsenko                               */
-/*   Updated: 2018/08/28 17:51:29 by phrytsenko                               */
+/*                                                        :::      ::::::::   */
+/*   io.c                                               :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: pgritsen <pgritsen@student.42.fr>          +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2018/07/30 13:18:50 by pgritsen          #+#    #+#             */
+/*   Updated: 2018/08/26 21:40:30 by pgritsen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -76,10 +76,7 @@ static void		proceed_nickname(char *nickname)
 static void		got_command(char *line)
 {
 	if (g_env.term_size.ws_col < TERM_MIN_WIDTH || g_env.term_size.ws_row < TERM_MIN_HEIGHT)
-	{
-		free(line);
-		return ;
-	}
+		return free(line);
 	g_prevent_update = false;
 	if (line && *line && !g_env.nickname)
 		proceed_nickname(line);
@@ -92,7 +89,7 @@ static void		got_command(char *line)
 		free(line);
 		line = trimmed;
 		if (!(trimmed = ft_strsub(line, 0, ft_cinustrcn(line, MSG_MAX_LEN))))
-			return ;
+			return (free(line));
 		sprintf(tag, "["SELF_POINT"%s]: ", g_env.nickname);
 		ft_dlstpush(&g_env.chat_history.lines, ft_dlstnew(ft_strjoin(tag, trimmed), sizeof(void *)));
 		g_env.chat_history.size++;
@@ -171,23 +168,24 @@ void			handle_input(int fd, short ev, bool block)
 					g_env.layot.chat_offset ? g_env.layot.chat_offset-- : (uint)beep();
 					display_chat();
 					break ;
-				case RL_KEY_PAGEUP:
-					g_env.layot.u_online_offset + g_env.ws.sidebar->_maxy + 1 < g_env.users_online.size
-						? g_env.layot.u_online_offset++ : (uint)beep();
-					// display_chat();
-					break ;
 				case RL_KEY_PAGEDOWN:
-					g_env.layot.u_online_offset ? g_env.layot.u_online_offset-- : (uint)beep();
-					// display_chat();
+					g_env.layot.u_online_offset + g_env.ws.u_online->_maxy + 1 < g_env.users_online.size
+						? g_env.layot.u_online_offset++ : 0;
+					display_users_online();
+					g_env.layot.rooms_a_offset + g_env.ws.rooms_a->_maxy + 1 < g_env.rooms_avaliable.size
+						? g_env.layot.rooms_a_offset++ : 0;
+					display_rooms();
+					break ;
+				case RL_KEY_PAGEUP:
+					g_env.layot.u_online_offset ? g_env.layot.u_online_offset-- : 0;
+					display_users_online();
+					g_env.layot.rooms_a_offset ? g_env.layot.rooms_a_offset-- : 0;
+					display_rooms();
 					break ;
 				case RL_KEY_ESC:
 					curses_exit(NULL, NULL);
 					break ;
 				default:
-					// For debug
-					// werase(g_env.ws.input);
-					// mvwprintw(g_env.ws.input, 0, 0, "%ld", utf);
-					// wrefresh(g_env.ws.input);
 					g_input_avb = true;
 					for (size_t it = 0; it < sizeof(uint64_t) && (g_symb = ((char *)&utf)[it]); it++)
 						rl_callback_read_char();
@@ -197,6 +195,8 @@ void			handle_input(int fd, short ev, bool block)
 		else if (g_symb == '\f')
 		{
 			g_env.layot.chat_offset = 0;
+			g_env.layot.u_online_offset = 0;
+			g_env.layot.rooms_a_offset = 0;
 			display_chat();
 		}
 		else if (g_symb == KEY_RESIZE)

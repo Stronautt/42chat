@@ -50,13 +50,11 @@ ssize_t		send_data(int sockfd, const void * data, size_t size, t_command command
 {
 	ssize_t			ret;
 	uint64_t		hash = hash_data(data, size);
-	unsigned char	*msg = malloc(size + sizeof(t_command));
+	unsigned char	*msg = ft_memalloc(size + sizeof(t_command));
 
 	ft_memcpy(msg, &command, sizeof(t_command));
 	ft_memcpy(msg + sizeof(t_command), data, size);
 	if (!good_connection(sockfd))
-		return (_clean(msg));
-	else if (size > INT16_MAX)
 		return (_clean(msg));
 	else if (send(sockfd, &size, sizeof(size), 0) < 0)
 		return (_clean(msg));
@@ -79,7 +77,7 @@ ssize_t		recieve_data(int sockfd, void ** data, t_command * command, int fl)
 		return (-1);
 	else if (recv(sockfd, &size, sizeof(size), fl) < 0)
 		return (-1);
-	else if (size > INT16_MAX || recv(sockfd, &hash, sizeof(hash), fl) < 0)
+	else if (recv(sockfd, &hash, sizeof(hash), fl) < 0)
 		return (-1);
 	else if (!(msg = ft_memalloc(size + sizeof(t_command))))
 		return (-1);

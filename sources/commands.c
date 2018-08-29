@@ -19,9 +19,8 @@ void	show_help(t_client * client)
 		"\nAvaliable commands:\n"
 		"    1. /help -> Displays all avaliable commands.\n"
 		"    2. /silent -> To enable/disable sound on new messages.\n"
-		"    3. /showrooms -> Displays all avaliable rooms.\n"
-		"    4. /newroom [NAME] [PASSWORD]? -> Creates new room. Can be locked by [PASSWORD].\n"
-		"    5. /joinroom [NAME] [PASSWORD]? -> Relocates you to specified room. If it's locked, [PASSWORD] required.\n"
+		"    3. /newroom [NAME] [PASSWORD]? -> Creates new room. Can be locked by [PASSWORD].\n"
+		"    4. /joinroom [NAME] [PASSWORD]? -> Relocates you to specified room. If it's locked, [PASSWORD] required.\n"
 		"\n";
 
 	send_data(client->sockfd, help_msg, sizeof(help_msg), 0);
@@ -29,8 +28,8 @@ void	show_help(t_client * client)
 
 void	toogle_silent_mode(t_client * client)
 {
-	char		msg_e[] = "* Silent mode enabled *\n";
-	char		msg_d[] = "* Silent mode disabled *\n";
+	const char	* msg_e = "* Silent mode enabled *\n";
+	const char	* msg_d = "* Silent mode disabled *\n";
 
 	client->silent_mode ^= 1;
 	((t_client *)client->node_in_room->content)->silent_mode ^= 1;
@@ -40,103 +39,21 @@ void	toogle_silent_mode(t_client * client)
 		send_data(client->sockfd, msg_d, sizeof(msg_d), 0);
 }
 
-void	show_all_rooms(t_client * client)
-{
-	char	* trash;
-	char	* anwser;
-	t_dlist	* rooms = g_chat_rooms;
-	int		first = 1;
-
-	anwser = ft_strdup("Avaliable rooms: ");
-	while (rooms && (rooms = rooms->next) != g_chat_rooms)
-	{
-		if (!first)
-		{
-			trash = ft_strjoin(anwser, ", ");
-			free(anwser);
-			anwser = trash;
-		}
-		first = 0;
-		trash = ft_strjoin(anwser, ((t_chat_room *)rooms->content)->name);
-		free(anwser);
-		anwser = trash;
-	}
-	trash = ft_strjoin(anwser, ".\n");
-	free(anwser);
-	anwser = trash;
-	send_data(client->sockfd, anwser, ft_strlen(anwser) + 1, 0);
-	free(anwser);
-}
-
-void	show_users_in_room(t_client * client)
-{
-	char	* trash;
-	char	* anwser;
-	t_dlist	* clients = ((t_chat_room *)client->chat_room_node->content)->users;
-	int		first = 1;
-
-	anwser = ft_strnew(256);
-	sprintf(anwser, "Online users in '%s' room (%zu):\n\t", ((t_chat_room *)client->chat_room_node->content)->name, ft_dlstsize(clients));
-	while (clients && (clients = clients->next) != ((t_chat_room *)client->chat_room_node->content)->users)
-	{
-		if (!first)
-		{
-			trash = ft_strjoin(anwser, ", ");
-			free(anwser);
-			anwser = trash;
-		}
-		first = 0;
-		trash = ft_strjoin(anwser, ((t_client *)clients->content)->nickname);
-		free(anwser);
-		anwser = trash;
-	}
-	trash = ft_strjoin(anwser, ".\n\n");
-	free(anwser);
-	anwser = trash;
-	send_data(client->sockfd, anwser, ft_strlen(anwser) + 1, 0);
-	free(anwser);
-}
-
 void	create_chat_room(t_client * client, char ** args)
 {
 	char		* msg;
-	t_dlist		* rooms = g_chat_rooms;
 	char		* room_name;
-	size_t		rooms_c = 0;
 
 	room_name = ft_strtrim(args[0]);
 	if (!args[0] || ft_strlen(room_name) < 1)
-	{
 		msg = "* You sould specify room name *\n";
-		send_data(client->sockfd, msg, ft_strlen(msg) + 1, 0);
-		ft_memdel((void **)&room_name);
-		return ;
-	}
-	rooms_c = ft_dlstsize(g_chat_rooms);
-	if (rooms_c >= 1024)
-	{
+	else if (ft_dlstsize(g_chat_rooms) >= MAX_ROOMS_NUMBER)
 		msg = "* Maximum number of rooms created *\n";
-		send_data(client->sockfd, msg, ft_strlen(msg) + 1, 0);
-		ft_memdel((void **)&room_name);
-		return ;
-	}
-	while (rooms && (rooms = rooms->next) != g_chat_rooms)
-		if (!ft_strcmp(((t_chat_room *)rooms->content)->name, room_name))
-		{
-			msg = "* Room with this name already exists *\n";
-			send_data(client->sockfd, msg, ft_strlen(msg) + 1, 0);
-			ft_memdel((void **)&room_name);
-			return ;
-		}
-	if (new_chat_room(room_name, args[1]) < 0)
-	{
-		msg = "* Couldn't create room *\n";
-		send_data(client->sockfd, msg, ft_strlen(msg) + 1, 0);
-		ft_memdel((void **)&room_name);
-		return ;
-	}
+	else if (new_chat_room(room_name, args[1]) < 0)
+		msg = "* Couldn't create the room *\n";
+	else if ((msg = "* Room successfully created *\n"))
+		update_room_list(NULL);
 	ft_memdel((void **)&room_name);
-	msg = "* Room successfully created *\n";
 	send_data(client->sockfd, msg, ft_strlen(msg) + 1, 0);
 }
 
@@ -190,12 +107,14 @@ void	join_chat_room(t_client * client, char ** args)
 	log_client_actions(client, "LEFT_ROOM", "left the room");
 	pthread_mutex_lock(&g_mutex);
 	ft_dlstdelelem(&client->node_in_room);
+	update_clients_data(client->chat_room_node->content);
 	client->node_in_room = ft_dlstnew(tmp, sizeof(void *));
 	client->chat_room_node = rooms;
 	ft_dlstpush(&((t_chat_room *)rooms->content)->users, client->node_in_room);
 	pthread_mutex_unlock(&g_mutex);
+	update_clients_data(client->chat_room_node->content);
 	msg = "* You successfully entered the room *\n";
 	send_data(client->sockfd, msg, ft_strlen(msg) + 1, 0);
-	// sync_chat_history(client);
+	sync_chat_history(client);
 	log_client_actions(client, "ENTERED_ROOM", "entered the room");
 }

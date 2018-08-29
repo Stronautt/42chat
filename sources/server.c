@@ -97,25 +97,30 @@ int				init_socket(struct sockaddr_in * conn_data)
 
 void	sync_chat_history(t_client * client)
 {
-	int			log_fd;
-	t_chat_room	* chat_room = client->chat_room_node->content;
+	int				log_fd;
+	t_chat_room		* chat_room = client->chat_room_node->content;
+	const char		* err = "* Unable to load history *";
 
 	if ((log_fd = open(chat_room->log_name, O_RDONLY)) > 0)
 	{
-		char	buffer[1024];
 		ssize_t	buf_len;
+		char	buffer[1024];
+		char	* data = ft_strnew(0);
+		char	* trash;
 
 		while ((buf_len = read(log_fd, buffer, sizeof(buffer) - 1)) > 0)
 		{
 			buffer[buf_len] = 0;
-			send_data(client->sockfd, buffer, buf_len + 1, 0);
+			trash = ft_strjoin(data, buffer);
+			free(data);
+			data = trash;
 		}
-		if (buf_len < 0)
-			send_data(client->sockfd, "* Unable to load history *", 28, 0);
+		buf_len < 0 ? send_data(client->sockfd, err, ft_strlen(err) + 1, UPDATE_HISTORY)
+					: send_data(client->sockfd, data, ft_strlen(data) + 1, UPDATE_HISTORY);
+		free(data);
 	}
 	else
-		send_data(client->sockfd, "* Unable to load history *", 28, 0);
-	send_data(client->sockfd, "", 1, 0);
+		send_data(client->sockfd, err, ft_strlen(err) + 1, UPDATE_HISTORY);
 }
 
 void			log_client_actions(t_client * client, const char * status, const char * public_status)
@@ -210,19 +215,90 @@ int				validate_msg(char * msg)
 	return (1);
 }
 
+char			* get_room_data(t_chat_room * room)
+{
+	char	* ret = 0;
+	char	* trash = 0;
+	t_dlist	* user;
+
+	if (!room)
+		return (NULL);
+	user = room->users;
+	ret = malloc(ft_strlen(room->name) + 16);
+	sprintf(ret, "[%s]: ", room->name);
+	while (user && (user = user->next) != room->users)
+	{
+		trash = ft_strjoin(ret, ((t_client *)user->content)->nickname);
+		free(ret);
+		ret = ft_strjoin(trash, " ");
+		free(trash);
+	}
+	return (ret);
+}
+
+char			* get_room_list(void)
+{
+	char		* ret = ft_strnew(0);
+	char		* trash = 0;
+	t_dlist		* room_node = g_chat_rooms;
+	t_chat_room	* room;
+
+	while (room_node && (room_node = room_node->next) != g_chat_rooms)
+	{
+		room = (t_chat_room *)room_node->content;
+		if (room->passwd)
+		{
+			trash = ft_strjoin(ret, ROOM_LOCKED);
+			free(ret);
+			ret = trash;
+		}
+		trash = ft_strjoin(ret, room->name);
+		free(ret);
+		ret = ft_strjoin(trash, " ");
+		free(trash);
+	}
+	return (ret);
+}
+
+void			update_clients_data(t_chat_room * room)
+{
+	size_t		data_len;
+	char		* data;
+	t_dlist		* user;
+
+	data = get_room_data(room);
+	data_len = ft_strlen(data);
+	user = room->users;
+	while (user && (user = user->next) != room->users)
+		send_data(((t_client *)user->content)->sockfd, data, data_len + 1, UPDATE_USERS);
+	free(data);
+}
+
+void			update_room_list(t_client * client)
+{
+	t_dlist	* client_node = g_clients;
+	char	* room_list = get_room_list();
+
+	if (client)
+		send_data(client->sockfd, room_list, ft_strlen(room_list) + 1, UPDATE_ROOMS);
+	else
+		while (client_node && (client_node = client_node->next) != g_clients)
+			send_data(((t_client *)client_node->content)->sockfd, room_list,
+				ft_strlen(room_list) + 1, UPDATE_ROOMS);
+	free(room_list);
+}
+
 uint8_t			treated_as_command(char * msg, ssize_t msg_l, t_client * client)
 {
-	char	**args;
-	char	buf[1024];
-	ssize_t	len;
-	uint8_t	found = 0;
-	static const t_assocc cmds[] = {
+	char					**args;
+	char					buf[1024];
+	ssize_t					len;
+	uint8_t					found = 0;
+	static const t_assocc	cmds[] = {
 		{"help", &show_help},
 		{"silent", &toogle_silent_mode},
-		{"showrooms", &show_all_rooms},
 		{"newroom", &create_chat_room},
-		{"joinroom", &join_chat_room},
-		{"online", &show_users_in_room}
+		{"joinroom", &join_chat_room}
 	};
 
 	if (!msg || msg_l <= 2 || msg[0] != '/')
@@ -302,6 +378,7 @@ void			trace_income_msgs(t_client * client)
 void			disconnect_client(t_dlist * client_node)
 {
 	t_client	* client = client_node->content;
+	t_chat_room	* room = client->chat_room_node->content;
 
 	if (nickname_is_valid(client->nickname))
 		log_client_actions(client, "DISCONNECTED", "left the chat");
@@ -310,46 +387,30 @@ void			disconnect_client(t_dlist * client_node)
 	ft_dlstdelelem(&client->node_in_room);
 	ft_dlstdelelem(&client_node);
 	pthread_mutex_unlock(&g_mutex);
+	update_clients_data(room);
 }
 
 void			*handle_client(t_dlist * client_node)
 {
-	t_command	cmd;
 	t_client	* client = client_node->content;
 	t_client	* tmp;
-	char		* sys_act;
-	char		* public_act;
 
 	pthread_cleanup_push((void (*)(void *))&disconnect_client, client_node);
-	if (recieve_data(client->sockfd, 0, &cmd, MSG_WAITALL) > 0)
-	{
-		client->chat_room_node = g_chat_rooms->next;
-		if (cmd == CONNECT)
-		{
-			get_nickname(client);
-			sync_chat_history(client);
-			sys_act = "CONNECTED";
-			public_act = "joined the chat";
-		}
-		else if (cmd == RECONNECT)
-		{
-			get_nickname(client);
-			sys_act = "RECONNECTED";
-			public_act = "returned to the chat";
-		}
-		else
-			pthread_exit(NULL);
-		if (!(tmp = malloc(sizeof(t_client))))
-			pthread_exit(NULL);
-		ft_memcpy(tmp, client, sizeof(t_client));
-		pthread_mutex_lock(&g_mutex);
-		client->node_in_room = ft_dlstnew(tmp, sizeof(void *));
-		ft_dlstpush(&((t_chat_room *)client->chat_room_node->content)->users, client->node_in_room);
-		ft_dlstpush(&g_clients, client_node);
-		pthread_mutex_unlock(&g_mutex);
-		log_client_actions(client, sys_act, public_act);
-		trace_income_msgs(client);
-	}
+	client->chat_room_node = g_chat_rooms->next;
+	get_nickname(client);
+	sync_chat_history(client);
+	if (!(tmp = malloc(sizeof(t_client))))
+		pthread_exit(NULL);
+	pthread_mutex_lock(&g_mutex);
+	client->node_in_room = ft_dlstnew(tmp, sizeof(void *));
+	ft_memcpy(tmp, client, sizeof(t_client));
+	ft_dlstpush(&((t_chat_room *)client->chat_room_node->content)->users, client->node_in_room);
+	ft_dlstpush(&g_clients, client_node);
+	pthread_mutex_unlock(&g_mutex);
+	log_client_actions(client, "CONNECTED", "joined the chat");
+	update_clients_data(client->chat_room_node->content);
+	update_room_list(client);
+	trace_income_msgs(client);
 	pthread_cleanup_pop(1);
 	return (NULL);
 }
@@ -384,15 +445,21 @@ void			handle_connections(int server, struct sockaddr_in * conn_data)
 		log_errors(g_log_err_fd, "Too many accept system calls in line failed!");
 }
 
-int				new_chat_room(char * name, char * passwd)
+int				new_chat_room(const char * name, const char * passwd)
 {
+	t_dlist		* rooms = g_chat_rooms;
 	t_chat_room	* new_room;
 
 	if (!name)
 		return (-1);
+	else if (!nickname_is_valid(name))
+		return (-1);
 	else if (!(new_room = ft_memalloc(sizeof(t_chat_room))))
 		return (-1);
-	new_room->name = ft_strsub(name, 0, 16);
+	new_room->name = ft_strsub(name, 0, ft_cinustrcn(name, MAX_NICKNAME_LEN));
+	while (rooms && (rooms = rooms->next) != g_chat_rooms)
+		if (!ft_strcmp(((t_chat_room *)rooms->content)->name, new_room->name))
+			return (-1);
 	if (passwd)
 		new_room->passwd = hash_data(passwd, ft_strlen(passwd));
 	sprintf(new_room->log_name, "./logs/log_chat_%s_%ld.txt", new_room->name, time(NULL));

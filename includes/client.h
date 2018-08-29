@@ -29,7 +29,7 @@
 # define SELF_POINT "\02"
 
 # define TERM_MIN_WIDTH 40
-# define TERM_MIN_HEIGHT 8
+# define TERM_MIN_HEIGHT 9
 
 # define C_COLOR_RED 1
 # define C_COLOR_CYAN 2
@@ -39,16 +39,19 @@ typedef struct	s_workspaces
 {
 	WINDOW			* input;
 	WINDOW			* chat;
-	WINDOW			* sidebar;
+	WINDOW			* u_online;
+	WINDOW			* rooms_a;
 	WINDOW			* input_b;
 	WINDOW			* chat_b;
-	WINDOW			* sidebar_b;
+	WINDOW			* u_online_b;
+	WINDOW			* rooms_a_b;
 }				t_workspaces;
 
 typedef struct	s_layot
 {
 	uint			chat_offset;
 	uint			u_online_offset;
+	uint			rooms_a_offset;
 }				t_layot;
 
 typedef struct	s_buffer
@@ -68,21 +71,27 @@ typedef struct	s_env
 	uint8_t				connection_lost;
 	t_buffer			chat_history;
 	t_buffer			users_online;
+	t_buffer			rooms_avaliable;
 	t_workspaces		ws;
 	struct winsize		term_size;
 	struct sockaddr_in	conn_data;
 }				t_env;
 
-extern char		* g_error;
 extern t_env	g_env;
-
-void			update_online_users(void);
 
 int				try_reconnect(void);
 
 void			resize_curses(int sig);
 
+void			update_rooms(char * raw);
+
+void			display_rooms(void);
+
+void			update_users_online(char * raw);
+
 void			display_users_online(void);
+
+void			update_chat_history(char * raw);
 
 void			display_chat(void);
 
