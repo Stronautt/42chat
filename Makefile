@@ -22,14 +22,14 @@ CFLAGS		+=	-O2 -fdata-sections -ffunction-sections
 
 HDRSDIR		=	./includes
 
-HDRS		=	$(addprefix $(HDRSDIR)/, node.h server.h client.h)
+HDRS		=	$(addprefix $(HDRSDIR)/, node.h server.h client.h handler.h)
 
 SRCSDIR		=	./sources
 
 SRCS_1		=	server.c data_exchange.c data_validation.c cmd_helpers.c		\
 				cmd_interfaces.c
 SRCS_2		=	client.c data_exchange.c data_validation.c render.c io.c		\
-				update_data.c curses.c
+				update_data.c curses.c key_handler.c readline.c
 
 OBJDIR		=	./obj
 

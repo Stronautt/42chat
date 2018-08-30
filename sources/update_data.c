@@ -6,7 +6,7 @@
 /*   By: phrytsenko                                                           */
 /*                                                                            */
 /*   Created: 2018/08/30 12:49:47 by phrytsenko                               */
-/*   Updated: 2018/08/30 15:34:37 by phrytsenko                               */
+/*   Updated: 2018/08/30 17:43:58 by phrytsenko                               */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,6 +32,7 @@ void			update_users_online(char * raw)
 		return ;
 	else if (!(users = ft_strchr(raw, ':')))
 		return (free(raw));
+	g_env.room_name ? free(g_env.room_name) : 0;
 	g_env.room_name = ft_get_content(raw, '[', ']');
 	g_env.layot.u_online_offset = 0;
 	ft_dlstclear(&g_env.users_online.lines);

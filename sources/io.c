@@ -11,33 +11,13 @@
 /* ************************************************************************** */
 
 #include "client.h"
-
-int		g_symb = 0;
-bool	g_input_avb = false;
-bool	g_prevent_update = false;
-
-static int		readline_input_avail(void)
-{
-	return (g_input_avb);
-}
-
-static int		readline_getc(void)
-{
-	if (g_env.term_size.ws_col < TERM_MIN_WIDTH
-		|| g_env.term_size.ws_row < TERM_MIN_HEIGHT)
-		return (beep() * 0);
-	g_prevent_update = false;
-	if (g_env.connection_lost)
-		return (beep() * 0);
-	g_input_avb = false;
-	return (g_symb == '\t' ? ' ' : g_symb);
-}
+#include "handler.h"
 
 static void		proceed_nickname(char *nickname)
 {
-	char	*err;
+	const char	*err;
 
-	err = "";
+	err = 0;
 	if (ft_cinustr(nickname) > MAX_NICKNAME_LEN && (g_prevent_update = true))
 		err = "* Nickname is too long *";
 	else if (!nickname_is_valid(nickname) && (g_prevent_update = true))
@@ -49,133 +29,52 @@ static void		proceed_nickname(char *nickname)
 		return ;
 	else if (ungetch(ERR) == OK)
 		return (render_call(display_chat, g_env.ws.chat));
-	werase(g_env.ws.input);
-	mvwprintw(g_env.ws.input, 0, 0, err);
-	wrefresh(g_env.ws.input);
+	if (err)
+	{
+		werase(g_env.ws.input);
+		mvwprintw(g_env.ws.input, 0, 0, err);
+		wrefresh(g_env.ws.input);
+	}
 }
 
-static void		got_command(char *line)
+static void		proceed_msg(char *msg)
 {
-	if (g_env.term_size.ws_col < TERM_MIN_WIDTH || g_env.term_size.ws_row < TERM_MIN_HEIGHT)
+	char	tag[128];
+	char	* trimmed;
+
+	trimmed = ft_strtrim(msg);
+	msg = trimmed;
+	if (!(trimmed = ft_strsub(msg, 0, ft_cinustrcn(msg, MSG_MAX_LEN))))
+		return (free(msg));
+	sprintf(tag, MSG_POINT"["SELF_POINT"%s]: ", g_env.nickname);
+	g_env.layot.chat_offset = 0;
+	if (send_data(g_env.sockfd, trimmed, ft_strlen(trimmed) + 1, 0) < 0)
+	{
+		g_env.connection_lost = 1;
+		render_call(display_chat, g_env.ws.chat);
+		while (try_reconnect() < 0
+			|| send_data(g_env.sockfd, trimmed, ft_strlen(trimmed) + 1, 0) < 0);
+		g_env.connection_lost = 0;
+	}
+	ft_dlstpush(&g_env.chat_history.lines,
+		ft_dlstnew(ft_strjoin(tag, trimmed), sizeof(void *)));
+	g_env.chat_history.size++;
+	render_call(display_chat, g_env.ws.chat);
+	free(trimmed);
+	free(msg);
+}
+
+static void		catch_line(char *line)
+{
+	if (g_env.term_size.ws_col < TERM_MIN_WIDTH
+		|| g_env.term_size.ws_row < TERM_MIN_HEIGHT)
 		return free(line);
 	g_prevent_update = false;
 	if (line && *line && !g_env.nickname)
 		proceed_nickname(line);
 	else if (line && *line)
-	{
-		char	tag[128];
-		char	* trimmed;
-
-		trimmed = ft_strtrim(line);
-		free(line);
-		line = trimmed;
-		if (!(trimmed = ft_strsub(line, 0, ft_cinustrcn(line, MSG_MAX_LEN))))
-			return (free(line));
-		sprintf(tag, MSG_POINT"["SELF_POINT"%s]: ", g_env.nickname);
-		g_env.layot.chat_offset = 0;
-		if (send_data(g_env.sockfd, trimmed, ft_strlen(trimmed) + 1, 0) < 0)
-		{
-			g_env.connection_lost = 1;
-			render_call(display_chat, g_env.ws.chat);
-			while (try_reconnect() < 0 || send_data(g_env.sockfd, trimmed, ft_strlen(trimmed) + 1, 0) < 0);
-			g_env.connection_lost = 0;
-		}
-		ft_dlstpush(&g_env.chat_history.lines, ft_dlstnew(ft_strjoin(tag, trimmed), sizeof(void *)));
-		g_env.chat_history.size++;
-		render_call(display_chat, g_env.ws.chat);
-	}
+		proceed_msg(line);
 	free(line);
-}
-
-static void		readline_redisplay(void)
-{
-	if (g_prevent_update || g_env.term_size.ws_col < TERM_MIN_WIDTH || g_env.term_size.ws_row < TERM_MIN_HEIGHT)
-		return ;
-	char	* trimmed = ft_strtrim(rl_line_buffer);
-	size_t	cursor_col = ft_cinustrn(rl_line_buffer, rl_point);
-	size_t	offset_x = cursor_col % (g_env.ws.input->_maxx + 1);
-	size_t	mult_x = cursor_col / (g_env.ws.input->_maxx + 1) * (g_env.ws.input->_maxx + 1);
-	size_t	rl_line_buffer_len = ft_cinustr(trimmed);
-	char	* msg = ft_strsub(rl_line_buffer, ft_cinustrcn(rl_line_buffer, mult_x),
-							rl_point + ft_cinustrcn(rl_line_buffer + rl_point, g_env.ws.input->_maxx - offset_x + 1));
-
-	free(trimmed);
-	werase(g_env.ws.input);
-	mvwhline(g_env.ws.input_b, 0, 1, 0, g_env.ws.input_b->_maxx - 1);
-	if ((g_env.nickname && rl_line_buffer_len > MSG_MAX_LEN) || (!g_env.nickname && rl_line_buffer_len > MAX_NICKNAME_LEN))
-		wattron(g_env.ws.input, COLOR_PAIR(C_COLOR_RED));
-	mvwprintw(g_env.ws.input, 0, 0, "%s", msg);
-	if ((g_env.nickname && rl_line_buffer_len > MSG_MAX_LEN) || (!g_env.nickname && rl_line_buffer_len > MAX_NICKNAME_LEN))
-		wattroff(g_env.ws.input, COLOR_PAIR(C_COLOR_RED));
-	free(msg);
-	if (!g_env.nickname)
-		mvwprintw(g_env.ws.input_b, 0, 1, "> Enter nickname (%d/%d) <", rl_line_buffer_len, MAX_NICKNAME_LEN);
-	else if (g_env.connection_lost)
-		mvwprintw(g_env.ws.input_b, 0, 1, "> Wait, reconnecting... <");
-	else
-		mvwprintw(g_env.ws.input_b, 0, 1, "> %s, %s (%d/%d) <", rl_display_prompt, g_env.nickname, rl_line_buffer_len, MSG_MAX_LEN);
-	wrefresh(g_env.ws.input_b);
-	wmove(g_env.ws.input, 0, offset_x);
-	wrefresh(g_env.ws.input);
-}
-
-static uint64_t	_get_utf(void)
-{
-	ssize_t		it;
-	uint64_t	utf;
-	int			_delay;
-
-	utf = 0;
-	_delay = g_env.ws.input->_delay;
-	((uint8_t *)&utf)[0] = g_symb;
-	nodelay(g_env.ws.input, true);
-	it = 0;
-	while (++it < (ssize_t)sizeof(uint64_t))
-	{
-		if ((g_symb = wgetch(g_env.ws.input)) == 0x1b && ungetch(g_symb) == OK)
-			break ;
-		((uint8_t *)&utf)[it] = (g_symb == ERR ? 0 : g_symb);
-	}
-	g_env.ws.input->_delay = _delay;
-	return (utf);
-}
-
-void			handle_uni_key(uint64_t utf)
-{
-	switch (utf)
-	{
-		case RL_KEY_UP:
-			g_env.layot.chat_offset + g_env.ws.chat->_maxy + 1 < g_env.chat_history.size
-				? g_env.layot.chat_offset++ : (uint)beep();
-			render_call(display_chat, g_env.ws.chat);
-			break ;
-		case RL_KEY_DOWN:
-			g_env.layot.chat_offset ? g_env.layot.chat_offset-- : (uint)beep();
-			render_call(display_chat, g_env.ws.chat);
-			break ;
-		case RL_KEY_PAGEDOWN:
-			g_env.layot.u_online_offset + g_env.ws.u_online->_maxy + 1 < g_env.users_online.size
-				? g_env.layot.u_online_offset++ : 0;
-			render_call(display_users_online, g_env.ws.u_online);
-			g_env.layot.rooms_a_offset + g_env.ws.rooms_a->_maxy + 1 < g_env.rooms_avaliable.size
-				? g_env.layot.rooms_a_offset++ : 0;
-			render_call(display_rooms, g_env.ws.rooms_a);
-			break ;
-		case RL_KEY_PAGEUP:
-			g_env.layot.u_online_offset ? g_env.layot.u_online_offset-- : 0;
-			render_call(display_users_online, g_env.ws.u_online);
-			g_env.layot.rooms_a_offset ? g_env.layot.rooms_a_offset-- : 0;
-			render_call(display_rooms, g_env.ws.rooms_a);
-			break ;
-		case RL_KEY_ESC:
-			curses_exit(NULL, NULL);
-			break ;
-		default:
-			g_input_avb = true;
-			for (size_t it = 0; it < sizeof(uint64_t) && (g_symb = ((char *)&utf)[it]); it++)
-				rl_callback_read_char();
-			break ;
-	}
 }
 
 void			handle_input(int fd, short ev, bool block)
@@ -184,7 +83,7 @@ void			handle_input(int fd, short ev, bool block)
 	(void)ev;
 	while ((g_symb = wgetch(g_env.ws.input)) != ERR)
 		if (g_symb == 0x1b)
-			handle_uni_key(_get_utf());
+			handle_uni_key(get_uni_key());
 		else if (g_symb == '\f')
 		{
 			g_env.layot.chat_offset = 0;
@@ -213,5 +112,5 @@ void			init_readline(void)
 	rl_getc_function = (int (*)(FILE *))&readline_getc;
 	rl_input_available_hook = readline_input_avail;
 	rl_redisplay_function = readline_redisplay;
-	rl_callback_handler_install("Your message", got_command);
+	rl_callback_handler_install("Your message", catch_line);
 }
