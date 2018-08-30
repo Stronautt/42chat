@@ -19,7 +19,8 @@ int		nickname_is_valid(const char * nickname)
 	while (*nickname++)
 		if ((*(nickname - 1) > 0 && !ft_isprint(*(nickname - 1)))
 			|| *(nickname - 1) == '[' || *(nickname - 1) == ']'
-			|| *(nickname - 1) == ':' || *(nickname - 1) == ' ')
+			|| *(nickname - 1) == ':' || *(nickname - 1) == ' '
+			|| *(nickname - 1) == '/')
 			return (0);
 	return (1);
 }

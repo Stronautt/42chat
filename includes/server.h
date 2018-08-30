@@ -45,14 +45,13 @@ typedef struct	s_chat_room
 extern t_dlist			* g_clients;
 extern t_dlist			* g_chat_rooms;
 extern pthread_mutex_t	g_mutex;
+
 /*
 **				Server.c
 **				↓↓↓↓↓↓↓↓
 */
 
 void			log_client_actions(t_client * client, const char * status, const char * public_status);
-
-int				new_chat_room(const char * name, const char * passwd);
 
 void			sync_chat_history(t_client * client);
 
@@ -61,16 +60,26 @@ void			update_clients_data(t_chat_room * room);
 void			update_room_list(t_client * client);
 
 /*
-**				Commands.c
-**				↓↓↓↓↓↓↓↓↓↓
+**				Cmd_interfaces.c
+**				↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
 */
 
 void			show_help(t_client * client);
 
 void			toogle_silent_mode(t_client * client);
 
-void			create_chat_room(t_client * client, char ** args);
+void			create_chat_room(t_client * client, const char ** args);
 
-void			join_chat_room(t_client * client, char ** args);
+void			join_chat_room(t_client * client, const char ** args);
+
+/*
+**				Cmd_helpers.c
+**				↓↓↓↓↓↓↓↓↓↓↓↓↓
+*/
+
+const char		*validate_room_data(const char ** args, t_dlist ** rooms,
+									const t_client * client, t_client ** c_dup);
+
+const char		*new_chat_room(const char * name, const char * passwd);
 
 #endif

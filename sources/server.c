@@ -359,7 +359,7 @@ void			trace_income_msgs(t_client * client)
 		else if (!(public_msg = ft_strnew(msg_l + ft_strlen(client->nickname) + 16)))
 			pthread_exit(NULL);
 		msg[msg_l] = 0;
-		public_msg_l = sprintf(public_msg, "[%s]: %s", client->nickname, msg);
+		public_msg_l = sprintf(public_msg, MSG_POINT"[%s]: %s", client->nickname, msg);
 		ft_memdel((void **)&msg);
 		public_msg[public_msg_l] = 0;
 		pthread_mutex_lock(&g_mutex);
@@ -442,32 +442,6 @@ void			handle_connections(int server, struct sockaddr_in * conn_data)
 		log_errors(g_log_err_fd, "Too many accept system calls in line failed!");
 }
 
-int				new_chat_room(const char * name, const char * passwd)
-{
-	t_dlist		* rooms = g_chat_rooms;
-	t_chat_room	* new_room;
-
-	if (!name)
-		return (-1);
-	else if (!nickname_is_valid(name))
-		return (-1);
-	else if (!(new_room = ft_memalloc(sizeof(t_chat_room))))
-		return (-1);
-	new_room->name = ft_strsub(name, 0, ft_cinustrcn(name, MAX_NICKNAME_LEN));
-	while (rooms && (rooms = rooms->next) != g_chat_rooms)
-		if (!ft_strcmp(((t_chat_room *)rooms->content)->name, new_room->name))
-			return (-1);
-	if (passwd)
-		new_room->passwd = hash_data(passwd, ft_strlen(passwd));
-	sprintf(new_room->log_name, "./logs/log_chat_%s_%ld.txt", new_room->name, time(NULL));
-	if ((new_room->log_fd = open(new_room->log_name, O_WRONLY | O_APPEND | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP)) < 0)
-		return (-1);
-	pthread_mutex_lock(&g_mutex);
-	ft_dlstpush_back(&g_chat_rooms, ft_dlstnew(new_room, sizeof(void *)));
-	pthread_mutex_unlock(&g_mutex);
-	return (0);
-}
-
 /*
 *	SIGHUP		1	Hangup (POSIX)
 *	SIGINT		2	Terminal interrupt (ANSI)
@@ -503,23 +477,22 @@ int				new_chat_room(const char * name, const char * passwd)
 
 void			sig_handler(int sig)
 {
-	char	err_msg[256];
-	int		critical = 0;
-	int		is_critical[] = {
-		0, 1, 1, 1, 1, 1, 1,
-		1, 1, 0, 1, 0, 0, 0,
-		1, 1, 1, 0, 1, 1, 0,
-		0, 1, 1, 1, 0, 0, 0,
-		0, 0
+	char		err_msg[256];
+	int			critical;
+	static int	is_critical[] = {
+		0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0,
+		0, 0, 1, 1, 1, 0, 1, 1, 0, 0, 1, 1,
+		1, 0, 0, 0, 0, 0
 	};
-	char	*signames[] = {
-		"SIGHUP",	"SIGINT",	"SIGQUIT",	"SIGILL",	"SIGTRAP",	"SIGIOT",	"SIGBUS",
-		"SIGFPE",	"SIGKILL",	"SIGUSR1",	"SIGSEGV",	"SIGUSR2",	"SIGPIPE",	"SIGALRM",
-		"SIGTERM",	"SIGSTKFLT","SIGCHLD",	"SIGCONT",	"SIGSTOP",	"SIGTSTP",	"SIGTTIN",
-		"SIGTTOU",	"SIGURG",	"SIGXCPU",	"SIGXFSZ",	"SIGVTALRM","SIGPROF",	"SIGWINCH",
-		"SIGIO",	"SIGPWR"
+	static char	*signames[] = {
+		"SIGHUP", "SIGINT", "SIGQUIT", "SIGILL", "SIGTRAP", "SIGIOT",
+		"SIGBUS", "SIGFPE", "SIGKILL", "SIGUSR1", "SIGSEGV", "SIGUSR2",
+		"SIGPIPE", "SIGALRM", "SIGTERM", "SIGSTKFLT","SIGCHLD", "SIGCONT",
+		"SIGSTOP", "SIGTSTP", "SIGTTIN", "SIGTTOU", "SIGURG", "SIGXCPU",
+		"SIGXFSZ", "SIGVTALRM","SIGPROF", "SIGWINCH", "SIGIO", "SIGPWR"
 	};
 
+	critical = 0;
 	if (sig >= 0 && sig < (int)(sizeof(signames) / sizeof(*signames)))
 	{
 		critical = is_critical[sig - 1];
@@ -564,7 +537,7 @@ int				main(void)
 	while (++sig <= 30)
 		if (sig != SIGKILL && sig != SIGSTOP)
 			signal(sig, sig_handler);
-	if (new_chat_room("general", 0) < 0)
+	if (new_chat_room("general", 0))
 		return (EXIT_FAILURE);
 	else if (init_logs() < 0)
 		return (EXIT_FAILURE);

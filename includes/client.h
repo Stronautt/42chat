@@ -17,8 +17,6 @@
 # include <curses.h>
 # include <math.h>
 # include <locale.h>
-# include <wchar.h>
-# include <event.h>
 
 # define RL_KEY_UP 0x415b1b
 # define RL_KEY_DOWN 0x425b1b
@@ -37,27 +35,27 @@
 
 typedef struct	s_workspaces
 {
-	WINDOW			* input;
-	WINDOW			* chat;
-	WINDOW			* u_online;
-	WINDOW			* rooms_a;
-	WINDOW			* input_b;
-	WINDOW			* chat_b;
-	WINDOW			* u_online_b;
-	WINDOW			* rooms_a_b;
+	WINDOW				* input;
+	WINDOW				* chat;
+	WINDOW				* u_online;
+	WINDOW				* rooms_a;
+	WINDOW				* input_b;
+	WINDOW				* chat_b;
+	WINDOW				* u_online_b;
+	WINDOW				* rooms_a_b;
 }				t_workspaces;
 
 typedef struct	s_layot
 {
-	uint			chat_offset;
-	uint			u_online_offset;
-	uint			rooms_a_offset;
+	uint				chat_offset;
+	uint				u_online_offset;
+	uint				rooms_a_offset;
 }				t_layot;
 
 typedef struct	s_buffer
 {
-	t_dlist			* lines;
-	size_t			size;
+	t_dlist				* lines;
+	size_t				size;
 }				t_buffer;
 
 typedef struct	s_env
@@ -79,28 +77,55 @@ typedef struct	s_env
 
 extern t_env	g_env;
 
+/*
+**				Client.c
+**				↓↓↓↓↓↓↓↓
+*/
+
 int				try_reconnect(void);
 
-void			resize_curses(int sig);
-
-void			update_rooms(char * raw);
-
-void			display_rooms(void);
-
-void			update_users_online(char * raw);
-
-void			display_users_online(void);
-
-void			update_chat_history(char * raw);
-
-void			display_chat(void);
-
-void			init_design(void);
+/*
+**				IO.c
+**				↓↓↓↓
+*/
 
 void			init_readline(void);
 
 void			handle_input(int fd, short ev, bool block);
 
-int				curses_exit(void (*clear_callback)(), void * callback_data);
+/*
+**				Curses.c
+**				↓↓↓↓↓↓↓↓
+*/
+
+void			resize_curses(void);
+
+void			init_design(void);
+
+void			curses_exit(void (*clear_callback)(), void * callback_data);
+
+/*
+**				Render.c
+**				↓↓↓↓↓↓↓↓
+*/
+
+void			render_call(void (*func)(), WINDOW * target);
+
+void			display_rooms(void);
+
+void			display_users_online(void);
+
+void			display_chat(void);
+
+/*
+**				Data_update.c
+**				↓↓↓↓↓↓↓↓↓↓↓↓↓
+*/
+
+void			update_rooms(char * raw);
+
+void			update_users_online(char * raw);
+
+void			update_chat_history(char * raw);
 
 #endif

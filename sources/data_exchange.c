@@ -28,15 +28,11 @@ uint64_t	hash_data(const void * data, size_t size)
 {
 	uint64_t		hash = 5381;
 	unsigned char	* tmp = (unsigned char *)data;
-	int				c;
 
 	if (!data || !size)
 		return (0);
 	while (size--)
-	{
-		c = *tmp++;
-		hash = ((hash << 5) + hash) + c;
-	}
+		hash = ((hash << 5) + hash) + *tmp++;
 	return (hash);
 }
 

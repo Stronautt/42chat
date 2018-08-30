@@ -26,8 +26,10 @@ HDRS		=	$(addprefix $(HDRSDIR)/, node.h server.h client.h)
 
 SRCSDIR		=	./sources
 
-SRCS_1		=	server.c data_exchange.c data_validation.c commands.c
-SRCS_2		=	client.c data_exchange.c data_validation.c design.c io.c
+SRCS_1		=	server.c data_exchange.c data_validation.c cmd_helpers.c		\
+				cmd_interfaces.c
+SRCS_2		=	client.c data_exchange.c data_validation.c render.c io.c		\
+				update_data.c curses.c
 
 OBJDIR		=	./obj
 

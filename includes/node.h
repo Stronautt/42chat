@@ -27,13 +27,16 @@
 # include <netinet/in.h>
 # include <arpa/inet.h>
 # include <string.h>
+# include <strings.h>
 # include <pthread.h>
 # include <readline/readline.h>
 # include <readline/history.h>
 # include <signal.h>
+# include <event.h>
 
 # define PORT 2089
 
+# define MSG_POINT "\01"
 # define ROOM_LOCKED "\03"
 
 # define MSG_MAX_LEN 255

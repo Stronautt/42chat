@@ -41,7 +41,7 @@ void			get_messages(void)
 	free(buffer);
 	g_env.chat_history.size += ft_dlstsize(lines);
 	ft_dlstmerge(&g_env.chat_history.lines, &lines);
-	display_chat();
+	render_call(display_chat, g_env.ws.chat);
 }
 
 char			*init_socket(struct sockaddr_in * c_data, const char * server_ip)
