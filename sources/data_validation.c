@@ -14,7 +14,7 @@
 
 int		nickname_is_valid(const char * nickname)
 {
-	if (ft_strlen(nickname) <= 0)
+	if (!nickname || ft_strlen(nickname) <= 0)
 		return (0);
 	while (*nickname++)
 		if ((*(nickname - 1) > 0 && !ft_isprint(*(nickname - 1)))
@@ -42,13 +42,14 @@ size_t	splitted_size(char ** parts)
 	return (size);
 }
 
-void	free_splitted(char ** parts)
+int		free_splitted(char ** parts)
 {
 	char	** s_p = parts;
 
 	if (!parts)
-		return ;
+		return (0);
 	while (*parts)
 		free(*parts++);
 	free(s_p);
+	return (0);
 }

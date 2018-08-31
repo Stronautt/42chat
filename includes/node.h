@@ -28,7 +28,6 @@
 # include <arpa/inet.h>
 # include <string.h>
 # include <strings.h>
-# include <pthread.h>
 # include <readline/readline.h>
 # include <readline/history.h>
 # include <signal.h>
@@ -78,6 +77,6 @@ int				_clean(void *data);
 
 size_t			splitted_size(char ** parts);
 
-void			free_splitted(char ** parts);
+int				free_splitted(char ** parts);
 
 #endif

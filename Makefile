@@ -17,7 +17,6 @@ CC			=	gcc
 
 CFLAGS		=	-g3
 CFLAGS		+=	-Wextra -Werror -Wall
-# CFLAGS		+=	-g
 CFLAGS		+=	-O2 -fdata-sections -ffunction-sections
 
 HDRSDIR		=	./includes
@@ -27,7 +26,7 @@ HDRS		=	$(addprefix $(HDRSDIR)/, node.h server.h client.h handler.h)
 SRCSDIR		=	./sources
 
 SRCS_1		=	server.c data_exchange.c data_validation.c cmd_helpers.c		\
-				cmd_interfaces.c
+				cmd_interfaces.c system.c msg_helpers.c msg_helpers_2.c
 SRCS_2		=	client.c data_exchange.c data_validation.c render.c io.c		\
 				update_data.c curses.c key_handler.c readline.c
 
@@ -45,7 +44,7 @@ LIBSDEPS	=	$(addprefix $(LIBFOLDER)/, libft/libft.a)
 INCLUDES	=	-I./includes
 INCLUDES	+=	$(addprefix -I$(LIBFOLDER)/, libft)
 
-LIBRARIES	=	$(addprefix -L$(LIBFOLDER)/, libft) -lft -lreadline -lpthread
+LIBRARIES	=	$(addprefix -L$(LIBFOLDER)/, libft) -lft -levent
 
 uniq		=	$(if $1,$(firstword $1) $(call uniq,$(filter-out $(firstword $1),$1)))
 
@@ -58,7 +57,7 @@ $(NAME_1): $(OBJ_1) $(HDRS) $(LIBSDEPS)
 
 $(NAME_2): $(OBJ_2) $(HDRS) $(LIBSDEPS)
 	@printf "\n\033[32m[Creating $(NAME_2)].......\033[0m"
-	@$(CC) $(CFLAGS) -o $(NAME_2) $(OBJ_2) $(LIBRARIES) -lncursesw -lm -levent
+	@$(CC) $(CFLAGS) -o $(NAME_2) $(OBJ_2) $(LIBRARIES) -lreadline -lncursesw -lm
 	@printf "\033[32m[DONE]\033[0m\n"
 
 $(call uniq, $(OBJ_1) $(OBJ_2)): $(OBJDIR)/%.o : $(SRCSDIR)/%.c $(HDRS)

@@ -39,18 +39,19 @@ uint64_t	hash_data(const void * data, size_t size)
 ssize_t		send_data(int sockfd, const void * data,
 						size_t size, t_command command)
 {
-	t_packet	packet;
+	t_packet	* packet;
 
-	packet.size = size;
-	packet.cmd = command;
-	packet.crs_sum = hash_data(data, size);
-	packet.crs_sum += (packet.crs_sum << (packet.size % 5));
-	packet.crs_sum += packet.cmd;
+	packet = ft_memalloc(sizeof(t_packet));
+	packet->size = size;
+	packet->cmd = command;
+	packet->crs_sum = hash_data(data, size);
+	packet->crs_sum += (packet->crs_sum << (packet->size % 5));
+	packet->crs_sum += packet->cmd;
 	if (!good_connection(sockfd))
-		return (-1);
-	else if (send(sockfd, &packet, sizeof(t_packet), 0) < 0)
-		return (-1);
-	return (send(sockfd, data, size, 0));
+		return (_clean(packet) - 1);
+	else if (send(sockfd, packet, sizeof(t_packet), 0) < 0)
+		return (_clean(packet) - 1);
+	return (send(sockfd, data, size, 0) - _clean(packet));
 }
 
 ssize_t		recieve_data(int sockfd, void ** data,

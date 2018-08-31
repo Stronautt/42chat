@@ -25,9 +25,9 @@ static void		proceed_nickname(char *nickname)
 	else if (send_data(g_env.sockfd, nickname, ft_strlen(nickname) + 1, 0) < 0)
 		return ;
 	else if (recieve_data(g_env.sockfd, (void **)&g_env.nickname,
-							0, MSG_WAITALL) < 0)
-		return ;
-	else if (ungetch(ERR) == OK)
+							0, MSG_WAITALL) <= 0)
+		return (ft_memdel((void **)&g_env.nickname));
+	else
 		return (render_call(display_chat, g_env.ws.chat));
 	if (err)
 	{
@@ -79,20 +79,21 @@ static void		catch_line(char *line)
 
 void			handle_input(void)
 {
-	while ((g_symb = wgetch(g_env.ws.input)) != ERR)
-		if (g_symb == 0x1b)
-			handle_uni_key(get_uni_key());
-		else if (g_symb == '\f')
-		{
-			g_env.layot.chat_offset = 0;
-			g_env.layot.u_online_offset = 0;
-			g_env.layot.rooms_a_offset = 0;
-			render_call(display_chat, g_env.ws.chat);
-		}
-		else if (g_symb == KEY_RESIZE)
-			continue ;
-		else if ((g_input_avb = true))
-			rl_callback_read_char();
+	if ((g_symb = wgetch(g_env.ws.input)) == ERR)
+		return ;
+	else if (g_symb == 0x1b)
+		handle_uni_key(get_uni_key());
+	else if (g_symb == '\f')
+	{
+		g_env.layot.chat_offset = 0;
+		g_env.layot.u_online_offset = 0;
+		g_env.layot.rooms_a_offset = 0;
+		render_call(display_chat, g_env.ws.chat);
+	}
+	else if (g_symb == KEY_RESIZE)
+		return ;
+	else if ((g_input_avb = true))
+		rl_callback_read_char();
 }
 
 void			init_readline(void)

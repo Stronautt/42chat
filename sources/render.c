@@ -87,7 +87,7 @@ static void	draw_msg(int * l_n, const char *raw, WINDOW *tg, int *offset_row)
 	bool	own_msg;
 
 	if (!raw || (*offset_row && (*offset_row)--)
-		|| (*l_n -= ft_cinustr(raw) / (tg->_maxx + 2) + 1) < 0)
+		|| (*l_n -= ft_cinustr(raw) / (tg->_maxx + 4) + 1) < 0)
 		return ;
 	u_name = ft_get_content(raw, '[', ']');
 	own_msg = (u_name && *u_name == *SELF_POINT && u_name++ ? 1 : 0);

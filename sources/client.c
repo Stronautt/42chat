@@ -12,7 +12,7 @@
 
 #include "client.h"
 
-t_env			g_env;
+t_env			g_env = {0};
 
 void			proceed_cmds(t_command cmd, char * data)
 {
@@ -88,7 +88,6 @@ int				main(int ac, char **av)
 	char		*err;
 
 	setlocale(LC_ALL, "");
-	bzero(&g_env, sizeof(t_env));
 	if (ac < 2)
 		return (ft_printf("Usage: ./42chat [server_ip_address]\n") * 0);
 	else if ((err = init_socket(&g_env.conn_data, av[1])))

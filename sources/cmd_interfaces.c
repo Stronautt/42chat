@@ -59,13 +59,11 @@ void	join_chat_room(t_client * client, const char ** args)
 	if ((msg = validate_room_data(args, &rooms, client, &c_dup)))
 		return ((void)send_data(client->sockfd, msg, ft_strlen(msg) + 1, 0));
 	log_client_actions(client, "LEFT_ROOM", "left the room");
-	pthread_mutex_lock(&g_mutex);
 	ft_dlstdelelem(&client->node_in_room);
 	update_clients_data(client->chat_room_node->content);
 	client->node_in_room = ft_dlstnew(c_dup, sizeof(void *));
 	client->chat_room_node = rooms;
 	ft_dlstpush(&((t_chat_room *)rooms->content)->users, client->node_in_room);
-	pthread_mutex_unlock(&g_mutex);
 	update_clients_data(client->chat_room_node->content);
 	msg = "* You successfully entered the room *";
 	send_data(client->sockfd, msg, ft_strlen(msg) + 1, 0);
