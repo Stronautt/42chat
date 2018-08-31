@@ -96,15 +96,14 @@ int				main(int ac, char **av)
 	signal(SIGPIPE, SIG_IGN);
 	event_init();
 	init_design();
-	handle_input(0, 0, true);
-	nodelay(g_env.ws.input, true);
+	init_readline();
 	event_set(&g_env.ev_getmsg, g_env.sockfd, EV_READ | EV_PERSIST,
 				(void (*)(int, short, void *))&get_messages, NULL);
 	event_add(&g_env.ev_getmsg, NULL);
 	event_set(&g_env.ev_input, 0, EV_WRITE | EV_PERSIST,
 				(void (*)(int, short, void *))&handle_input, NULL);
 	event_add(&g_env.ev_input, NULL);
-	event_loop(0);
+	event_dispatch();
 	curses_exit(NULL, NULL);
 	return (0);
 }

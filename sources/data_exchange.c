@@ -44,6 +44,8 @@ ssize_t		send_data(int sockfd, const void * data,
 	packet.size = size;
 	packet.cmd = command;
 	packet.crs_sum = hash_data(data, size);
+	packet.crs_sum += (packet.crs_sum << (packet.size % 5));
+	packet.crs_sum += packet.cmd;
 	if (!good_connection(sockfd))
 		return (-1);
 	else if (send(sockfd, &packet, sizeof(t_packet), 0) < 0)
@@ -57,6 +59,7 @@ ssize_t		recieve_data(int sockfd, void ** data,
 	t_packet	packet;
 	ssize_t		ret;
 	void		* tmp;
+	uint64_t	tmp_crs;
 
 	data ? *data = 0 : 0;
 	if (!good_connection(sockfd))
@@ -67,7 +70,8 @@ ssize_t		recieve_data(int sockfd, void ** data,
 		return (-1);
 	else if ((ret = recv(sockfd, tmp, packet.size, flags)) < 0)
 		return (_clean(tmp) - 1);
-	else if (packet.crs_sum != hash_data(tmp, packet.size))
+	tmp_crs = hash_data(tmp, packet.size);
+	if (packet.crs_sum != tmp_crs + (tmp_crs << (packet.size % 5)) + packet.cmd)
 		return (_clean(tmp) - 1);
 	data ? *data = tmp : free(tmp);
 	command ? *command = packet.cmd : 0;

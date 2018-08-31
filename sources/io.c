@@ -77,10 +77,8 @@ static void		catch_line(char *line)
 	free(line);
 }
 
-void			handle_input(int fd, short ev, bool block)
+void			handle_input(void)
 {
-	(void)fd;
-	(void)ev;
 	while ((g_symb = wgetch(g_env.ws.input)) != ERR)
 		if (g_symb == 0x1b)
 			handle_uni_key(get_uni_key());
@@ -94,11 +92,7 @@ void			handle_input(int fd, short ev, bool block)
 		else if (g_symb == KEY_RESIZE)
 			continue ;
 		else if ((g_input_avb = true))
-		{
 			rl_callback_read_char();
-			if (!block)
-				break ;
-		}
 }
 
 void			init_readline(void)

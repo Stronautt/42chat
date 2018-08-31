@@ -6,7 +6,7 @@
 /*   By: phrytsenko                                                           */
 /*                                                                            */
 /*   Created: 2018/08/30 12:56:09 by phrytsenko                               */
-/*   Updated: 2018/08/30 16:22:01 by phrytsenko                               */
+/*   Updated: 2018/08/31 12:57:08 by phrytsenko                               */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -113,7 +113,7 @@ void			init_design(void)
 								COLS - s_w + 1);
 	g_env.ws.rooms_a = newwin(floor((LINES - 3) / 2.0) - 2, s_w - 2,
 								g_env.ws.u_online_b->_maxy + 2, COLS - s_w + 1);
-	init_readline();
+	nodelay(g_env.ws.input, true);
 	resize_curses();
 }
 

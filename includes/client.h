@@ -91,7 +91,7 @@ int				try_reconnect(void);
 
 void			init_readline(void);
 
-void			handle_input(int fd, short ev, bool block);
+void			handle_input(void);
 
 /*
 **				Curses.c
