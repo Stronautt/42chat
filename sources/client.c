@@ -6,15 +6,15 @@
 /*   By: pgritsen <pgritsen@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2018/07/30 13:18:50 by pgritsen          #+#    #+#             */
-/*   Updated: 2018/08/26 21:40:30 by pgritsen         ###   ########.fr       */
+/*   Updated: 2018/09/02 14:38:55 by pgritsen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "client.h"
 
-t_env			g_env = {0};
+t_env			g_env;
 
-void			proceed_cmds(t_command cmd, char * data)
+void			proceed_cmds(t_command cmd, char *data)
 {
 	if (cmd == UPDATE_USERS)
 		update_users_online(data);
@@ -26,9 +26,9 @@ void			proceed_cmds(t_command cmd, char * data)
 
 void			get_messages(void)
 {
-	char			* buffer;
-	char			* point;
-	t_dlist			* lines;
+	char			*buffer;
+	char			*point;
+	t_dlist			*lines;
 	t_command		cmd;
 
 	if (recieve_data(g_env.sockfd, (void **)&buffer,
@@ -44,7 +44,7 @@ void			get_messages(void)
 	render_call(display_chat, g_env.ws.chat);
 }
 
-char			*init_socket(struct sockaddr_in * c_data, const char * server_ip)
+char			*init_socket(struct sockaddr_in *c_data, const char *server_ip)
 {
 	const size_t	c_data_l = sizeof(struct sockaddr_in);
 
@@ -53,7 +53,7 @@ char			*init_socket(struct sockaddr_in * c_data, const char * server_ip)
 	memset(c_data, '0', c_data_l);
 	c_data->sin_family = AF_INET;
 	c_data->sin_port = htons(PORT);
-	if(inet_pton(AF_INET, server_ip, &c_data->sin_addr) <= 0)
+	if (inet_pton(AF_INET, server_ip, &c_data->sin_addr) <= 0)
 		return ("Invalid address");
 	else if (connect(g_env.sockfd, (struct sockaddr *)c_data, c_data_l) < 0)
 		return ("Couldn't connect to server, try again later.\n");
@@ -88,6 +88,7 @@ int				main(int ac, char **av)
 	char		*err;
 
 	setlocale(LC_ALL, "");
+	ft_bzero(&g_env, sizeof(t_env));
 	if (ac < 2)
 		return (ft_printf("Usage: ./42chat [server_ip_address]\n") * 0);
 	else if ((err = init_socket(&g_env.conn_data, av[1])))

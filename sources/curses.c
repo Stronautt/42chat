@@ -1,12 +1,12 @@
 /* ************************************************************************** */
 /*                                                                            */
-/*                                                                            */
-/*   curses.c                                                                 */
-/*                                                                            */
-/*   By: phrytsenko                                                           */
-/*                                                                            */
-/*   Created: 2018/08/30 12:56:09 by phrytsenko                               */
-/*   Updated: 2018/08/31 12:57:08 by phrytsenko                               */
+/*                                                        :::      ::::::::   */
+/*   curses.c                                           :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: pgritsen <pgritsen@student.42.fr>          +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2018/09/02 13:55:58 by pgritsen          #+#    #+#             */
+/*   Updated: 2018/09/02 15:18:43 by pgritsen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -63,6 +63,7 @@ static void		resize_windows(struct winsize size, const short s_w)
 
 void			resize_curses(void)
 {
+	int				offset;
 	const short		s_w = MAX_NICKNAME_LEN + 2;
 
 	ioctl(fileno(stdout), TIOCGWINSZ, (char *)&g_env.term_size);
@@ -72,8 +73,7 @@ void			resize_curses(void)
 	if (g_env.term_size.ws_col < TERM_MIN_WIDTH
 		|| g_env.term_size.ws_row < TERM_MIN_HEIGHT)
 	{
-		int		offset = (g_env.term_size.ws_col - s_w) / 2;
-
+		offset = (g_env.term_size.ws_col - s_w) / 2;
 		curs_set(0);
 		erase();
 		g_env.ws.input->_begy = g_env.term_size.ws_row - 2;
@@ -117,7 +117,7 @@ void			init_design(void)
 	resize_curses();
 }
 
-void		curses_exit(void (*clear_callback)(), void * callback_data)
+void			curses_exit(void (*clear_callback)(), void *callback_data)
 {
 	signal(SIGWINCH, SIG_IGN);
 	delwin(g_env.ws.input);

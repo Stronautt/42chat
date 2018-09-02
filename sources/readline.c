@@ -6,14 +6,14 @@
 /*   By: pgritsen <pgritsen@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2018/07/30 13:18:50 by pgritsen          #+#    #+#             */
-/*   Updated: 2018/08/26 13:59:18 by pgritsen         ###   ########.fr       */
+/*   Updated: 2018/09/02 15:14:44 by pgritsen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "client.h"
 #include "handler.h"
 
-static inline void	readline_redraw(const char * msg, size_t cursor_p,
+static inline void	readline_redraw(const char *msg, size_t cursor_p,
 														size_t m_l)
 {
 	werase(g_env.ws.input);
@@ -40,11 +40,11 @@ static inline void	readline_redraw(const char * msg, size_t cursor_p,
 
 void				readline_redisplay(void)
 {
-	size_t	cursor_col;
+	size_t	cur_col;
 	size_t	offset_x;
 	size_t	m_x;
 	size_t	rl_line_buffer_len;
-	char	* msg;
+	char	*msg;
 
 	if (g_prevent_update || g_env.term_size.ws_col < TERM_MIN_WIDTH
 		|| g_env.term_size.ws_row < TERM_MIN_HEIGHT)
@@ -52,9 +52,9 @@ void				readline_redisplay(void)
 	msg = ft_strtrim(rl_line_buffer);
 	rl_line_buffer_len = ft_cinustr(msg);
 	free(msg);
-	cursor_col = ft_cinustrn(rl_line_buffer, rl_point);
-	offset_x = cursor_col % (g_env.ws.input->_maxx + 1);
-	m_x = cursor_col / (g_env.ws.input->_maxx + 1) * (g_env.ws.input->_maxx + 1);
+	cur_col = ft_cinustrn(rl_line_buffer, rl_point);
+	offset_x = cur_col % (g_env.ws.input->_maxx + 1);
+	m_x = cur_col / (g_env.ws.input->_maxx + 1) * (g_env.ws.input->_maxx + 1);
 	msg = ft_strsub(rl_line_buffer, ft_cinustrcn(rl_line_buffer, m_x),
 							rl_point + ft_cinustrcn(rl_line_buffer + rl_point,
 								g_env.ws.input->_maxx - offset_x + 1));

@@ -1,18 +1,18 @@
 /* ************************************************************************** */
 /*                                                                            */
-/*                                                                            */
-/*   update_data.c                                                            */
-/*                                                                            */
-/*   By: phrytsenko                                                           */
-/*                                                                            */
-/*   Created: 2018/08/30 12:49:47 by phrytsenko                               */
-/*   Updated: 2018/08/31 12:57:13 by phrytsenko                               */
+/*                                                        :::      ::::::::   */
+/*   update_data.c                                      :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: pgritsen <pgritsen@student.42.fr>          +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2018/09/02 13:55:58 by pgritsen          #+#    #+#             */
+/*   Updated: 2018/09/02 15:25:16 by pgritsen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "client.h"
 
-void			update_rooms(char * raw)
+void			update_rooms(char *raw)
 {
 	if (!raw)
 		return ;
@@ -24,9 +24,9 @@ void			update_rooms(char * raw)
 	render_call(display_rooms, g_env.ws.rooms_a);
 }
 
-void			update_users_online(char * raw)
+void			update_users_online(char *raw)
 {
-	char	* users;
+	char	*users;
 
 	if (!raw)
 		return ;
@@ -42,7 +42,7 @@ void			update_users_online(char * raw)
 	render_call(display_users_online, g_env.ws.u_online);
 }
 
-void			update_chat_history(char * raw)
+void			update_chat_history(char *raw)
 {
 	if (!raw)
 		return ;

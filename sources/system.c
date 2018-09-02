@@ -1,12 +1,12 @@
 /* ************************************************************************** */
 /*                                                                            */
-/*                                                                            */
-/*   system.c                                                                 */
-/*                                                                            */
-/*   By: phrytsenko                                                           */
-/*                                                                            */
-/*   Created: 2018/08/31 19:17:14 by phrytsenko                               */
-/*   Updated: 2018/08/31 19:19:21 by phrytsenko                               */
+/*                                                        :::      ::::::::   */
+/*   system.c                                           :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: pgritsen <pgritsen@student.42.fr>          +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2018/09/02 13:55:58 by pgritsen          #+#    #+#             */
+/*   Updated: 2018/09/02 15:26:42 by pgritsen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,7 +21,7 @@ int		setnonblock(int fd)
 		return (flags);
 	else if ((flags = fcntl(fd, F_SETFL, flags | O_NONBLOCK)) < 0)
 		return (flags);
-	return 0;
+	return (0);
 }
 
 char	*init_socket(void)
@@ -46,11 +46,11 @@ char	*init_socket(void)
 	return (0);
 }
 
-int		log_errors(int fd, const char * msg)
+int		log_errors(int fd, const char *msg)
 {
 	char		time_s[32];
 	time_t		timer;
-	struct tm	* tm_info;
+	struct tm	*tm_info;
 
 	if (!msg)
 		return (0);
@@ -60,14 +60,14 @@ int		log_errors(int fd, const char * msg)
 	return (dprintf(fd, "[%s][pid: %d]: %s\n", time_s, getpid(), msg));
 }
 
-void	log_client_actions(t_client * client,
-							const char * status, const char * public_status)
+void	log_client_actions(t_client *client,
+							const char *status, const char *public_status)
 {
 	time_t		timer;
-	char		* msg;
-	struct tm	* tm_info;
-	t_chat_room	* chat_room = client->chat_room_node->content;
-	t_dlist		* clients = chat_room->users;
+	char		*msg;
+	struct tm	*tm_info;
+	t_chat_room	*chat_room;
+	t_dlist		*clients;
 
 	time(&timer);
 	tm_info = localtime(&timer);
@@ -76,7 +76,9 @@ void	log_client_actions(t_client * client,
 	strftime(msg, 256, "%Y-%m-%d %H:%M:%S", tm_info);
 	dprintf(g_env.sys_fd, "[%s][%s] -> %s\n", msg, client->nickname, status);
 	sprintf(msg, "* %s %s *", client->nickname, public_status);
+	chat_room = client->chat_room_node->content;
 	dprintf(chat_room->log_fd, "%s\n", msg);
+	clients = chat_room->users;
 	while (clients && (clients = clients->next) != chat_room->users)
 		if (clients->content && clients != client->node_in_room)
 			send_data(((t_client *)clients->content)->sockfd,
@@ -84,7 +86,7 @@ void	log_client_actions(t_client * client,
 	free(msg);
 }
 
-void	disconnect_client(t_dlist * client_node)
+void	disconnect_client(t_dlist *client_node)
 {
 	t_client	*client;
 	t_chat_room	*room;

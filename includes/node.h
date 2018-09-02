@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   node.h                                             :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: phrytsenko <phrytsenko@student.42.fr>      +#+  +:+       +#+        */
+/*   By: pgritsen <pgritsen@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2018/07/30 17:43:46 by pgritsen          #+#    #+#             */
-/*   Updated: 2018/08/03 17:42:37 by phrytsenko       ###   ########.fr       */
+/*   Updated: 2018/09/02 14:08:53 by pgritsen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -60,23 +60,25 @@ typedef struct	s_packet
 
 int				good_connection(int sockfd);
 
-uint64_t		hash_data(const void * data, size_t size);
+uint64_t		hash_data(const void *data, size_t size);
 
-ssize_t			send_data(int sockfd, const void * data, size_t size, t_command command);
+ssize_t			send_data(int sockfd, const void *data,
+							size_t size, t_command command);
 
-ssize_t			recieve_data(int sockfd, void ** data, t_command * command, int flags);
+ssize_t			recieve_data(int sockfd, void **data,
+							t_command *command, int flags);
 
 /*
 **				Data_validation.c
 **				↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
 */
 
-int				nickname_is_valid(const char * nickname);
+int				nickname_is_valid(const char *nickname);
 
-int				_clean(void *data);
+int				h_clean(void *data);
 
-size_t			splitted_size(char ** parts);
+size_t			splitted_size(char **parts);
 
-int				free_splitted(char ** parts);
+int				free_splitted(char **parts);
 
 #endif

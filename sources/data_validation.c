@@ -6,13 +6,13 @@
 /*   By: pgritsen <pgritsen@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2018/08/01 14:35:41 by pgritsen          #+#    #+#             */
-/*   Updated: 2018/08/01 14:45:23 by pgritsen         ###   ########.fr       */
+/*   Updated: 2018/09/02 14:57:30 by pgritsen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "node.h"
 
-int		nickname_is_valid(const char * nickname)
+int		nickname_is_valid(const char *nickname)
 {
 	if (!nickname || ft_strlen(nickname) <= 0)
 		return (0);
@@ -25,16 +25,17 @@ int		nickname_is_valid(const char * nickname)
 	return (1);
 }
 
-int		_clean(void *data)
+int		h_clean(void *data)
 {
 	free(data);
 	return (0);
 }
 
-size_t	splitted_size(char ** parts)
+size_t	splitted_size(char **parts)
 {
-	size_t	size = 0;
+	size_t	size;
 
+	size = 0;
 	if (!parts)
 		return (0);
 	while (parts[size])
@@ -42,10 +43,11 @@ size_t	splitted_size(char ** parts)
 	return (size);
 }
 
-int		free_splitted(char ** parts)
+int		free_splitted(char **parts)
 {
-	char	** s_p = parts;
+	char	**s_p;
 
+	s_p = parts;
 	if (!parts)
 		return (0);
 	while (*parts)

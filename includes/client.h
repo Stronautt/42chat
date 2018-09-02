@@ -6,7 +6,7 @@
 /*   By: pgritsen <pgritsen@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2018/07/30 13:18:50 by pgritsen          #+#    #+#             */
-/*   Updated: 2018/08/26 13:59:18 by pgritsen         ###   ########.fr       */
+/*   Updated: 2018/09/02 14:05:47 by pgritsen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -35,14 +35,14 @@
 
 typedef struct	s_workspaces
 {
-	WINDOW				* input;
-	WINDOW				* chat;
-	WINDOW				* u_online;
-	WINDOW				* rooms_a;
-	WINDOW				* input_b;
-	WINDOW				* chat_b;
-	WINDOW				* u_online_b;
-	WINDOW				* rooms_a_b;
+	WINDOW				*input;
+	WINDOW				*chat;
+	WINDOW				*u_online;
+	WINDOW				*rooms_a;
+	WINDOW				*input_b;
+	WINDOW				*chat_b;
+	WINDOW				*u_online_b;
+	WINDOW				*rooms_a_b;
 }				t_workspaces;
 
 typedef struct	s_layot
@@ -54,7 +54,7 @@ typedef struct	s_layot
 
 typedef struct	s_buffer
 {
-	t_dlist				* lines;
+	t_dlist				*lines;
 	size_t				size;
 }				t_buffer;
 
@@ -63,8 +63,8 @@ typedef struct	s_env
 	struct event		ev_getmsg;
 	struct event		ev_input;
 	int					sockfd;
-	char				* nickname;
-	char				* room_name;
+	char				*nickname;
+	char				*room_name;
 	t_layot				layot;
 	uint8_t				connection_lost;
 	t_buffer			chat_history;
@@ -102,14 +102,14 @@ void			resize_curses(void);
 
 void			init_design(void);
 
-void			curses_exit(void (*clear_callback)(), void * callback_data);
+void			curses_exit(void (*clear_callback)(), void *callback_data);
 
 /*
 **				Render.c
 **				↓↓↓↓↓↓↓↓
 */
 
-void			render_call(void (*func)(), WINDOW * target);
+void			render_call(void (*func)(), WINDOW *target);
 
 void			display_rooms(void);
 
@@ -122,11 +122,11 @@ void			display_chat(void);
 **				↓↓↓↓↓↓↓↓↓↓↓↓↓
 */
 
-void			update_rooms(char * raw);
+void			update_rooms(char *raw);
 
-void			update_users_online(char * raw);
+void			update_users_online(char *raw);
 
-void			update_chat_history(char * raw);
+void			update_chat_history(char *raw);
 
 /*
 **				Key_handler.c

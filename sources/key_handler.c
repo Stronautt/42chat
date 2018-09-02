@@ -6,7 +6,7 @@
 /*   By: pgritsen <pgritsen@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2018/07/30 13:18:50 by pgritsen          #+#    #+#             */
-/*   Updated: 2018/08/26 21:40:30 by pgritsen         ###   ########.fr       */
+/*   Updated: 2018/09/02 15:08:48 by pgritsen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -38,10 +38,10 @@ uint64_t	get_uni_key(void)
 {
 	size_t		it;
 	uint64_t	utf;
-	int			_delay;
+	int			delay;
 
 	utf = 0;
-	_delay = g_env.ws.input->_delay;
+	delay = g_env.ws.input->_delay;
 	((uint8_t *)&utf)[0] = g_symb;
 	nodelay(g_env.ws.input, true);
 	it = 0;
@@ -51,7 +51,7 @@ uint64_t	get_uni_key(void)
 			break ;
 		((uint8_t *)&utf)[it] = (g_symb == ERR ? 0 : g_symb);
 	}
-	g_env.ws.input->_delay = _delay;
+	g_env.ws.input->_delay = delay;
 	return (utf);
 }
 
@@ -85,8 +85,8 @@ void		handle_uni_key(uint64_t utf)
 
 	if (utf == RL_KEY_UP)
 	{
-		g_env.layot.chat_offset + g_env.ws.chat->_maxy + 1
-			< g_env.chat_history.size ? g_env.layot.chat_offset++ : (uint)beep();
+		g_env.layot.chat_offset + g_env.ws.chat->_maxy + 1 <
+			g_env.chat_history.size ? g_env.layot.chat_offset++ : (uint)beep();
 		render_call(display_chat, g_env.ws.chat);
 	}
 	else if (utf == RL_KEY_DOWN)

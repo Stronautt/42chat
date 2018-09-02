@@ -6,13 +6,13 @@
 /*   By: pgritsen <pgritsen@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2018/07/30 13:18:50 by pgritsen          #+#    #+#             */
-/*   Updated: 2018/08/26 21:40:33 by pgritsen         ###   ########.fr       */
+/*   Updated: 2018/09/02 15:27:32 by pgritsen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "client.h"
 
-void		render_call(void (*func)(), WINDOW * target)
+void		render_call(void (*func)(), WINDOW *target)
 {
 	if (!func || !target || g_env.term_size.ws_col < TERM_MIN_WIDTH
 		|| g_env.term_size.ws_row < TERM_MIN_HEIGHT)
@@ -80,7 +80,7 @@ void		display_users_online(void)
 		}
 }
 
-static void	draw_msg(int * l_n, const char *raw, WINDOW *tg, int *offset_row)
+static void	draw_msg(int *l_n, const char *raw, WINDOW *tg, int *offset_row)
 {
 	char	*u_name;
 	char	*msg;
@@ -119,8 +119,8 @@ void		display_chat(void)
 	{
 		mvwhline(g_env.ws.chat_b, g_env.ws.chat_b->_maxy, 1, 0,
 			g_env.ws.chat_b->_maxx - 1);
-		mvwprintw(g_env.ws.chat_b, g_env.ws.chat_b->_maxy, g_env.ws.chat_b->_maxx
-			- ft_nbrullen(g_env.chat_history.size)
+		mvwprintw(g_env.ws.chat_b, g_env.ws.chat_b->_maxy,
+			g_env.ws.chat_b->_maxx - ft_nbrullen(g_env.chat_history.size)
 			- ft_nbrullen(g_env.layot.chat_offset) - 12, "> l: %zu,"
 			" o: %zu <", g_env.chat_history.size, g_env.layot.chat_offset);
 		wrefresh(g_env.ws.chat_b);

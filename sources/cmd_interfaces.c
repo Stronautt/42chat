@@ -3,33 +3,33 @@
 /*                                                        :::      ::::::::   */
 /*   cmd_interfaces.c                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: phrytsenko <phrytsenko@student.42.fr>      +#+  +:+       +#+        */
+/*   By: pgritsen <pgritsen@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2018/08/03 17:34:19 by phrytsenko        #+#    #+#             */
-/*   Updated: 2018/08/03 17:57:31 by phrytsenko       ###   ########.fr       */
+/*   Updated: 2018/09/02 14:12:15 by pgritsen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "server.h"
 
-void	show_help(t_client * client)
+void	show_help(t_client *client)
 {
-	char	help_msg[] =
-		"\nAvaliable commands:\n"
-		"    1. /help -> Displays all avaliable commands.\n"
-		"    2. /silent -> To enable/disable sound on new messages.\n"
-		"    3. /newroom [NAME] [PASSWORD]? -> Creates new room."
-		" Can be locked by [PASSWORD].\n"
-		"    4. /joinroom [NAME] [PASSWORD]? -> Relocates you to specified room."
-		" If it's locked, [PASSWORD] required.";
+	const char	help_msg[] =
 
+	"\nAvaliable commands:\n"
+	"    1. /help -> Displays all avaliable commands.\n"
+	"    2. /silent -> To enable/disable sound on new messages.\n"
+	"    3. /newroom [NAME] [PASSWORD]? -> Creates new room."
+	" Can be locked by [PASSWORD].\n"
+	"    4. /joinroom [NAME] [PASSWORD]? -> Relocates you to specified room."
+	" If it's locked, [PASSWORD] required.";
 	send_data(client->sockfd, help_msg, sizeof(help_msg), 0);
 }
 
-void	toogle_silent_mode(t_client * client)
+void	toogle_silent_mode(t_client *client)
 {
-	const char	* msg_e = "* Silent mode enabled *";
-	const char	* msg_d = "* Silent mode disabled *";
+	const char	*msg_e = "* Silent mode enabled *";
+	const char	*msg_d = "* Silent mode disabled *";
 
 	client->silent_mode ^= 1;
 	((t_client *)client->node_in_room->content)->silent_mode ^= 1;
@@ -38,10 +38,10 @@ void	toogle_silent_mode(t_client * client)
 		: send_data(client->sockfd, msg_d, ft_strlen(msg_d) + 1, 0);
 }
 
-void	create_chat_room(t_client * client, const char ** args)
+void	create_chat_room(t_client *client, const char **args)
 {
-	const char	* msg;
-	char		* room_name;
+	const char	*msg;
+	char		*room_name;
 
 	room_name = ft_strtrim(args[0]);
 	!(msg = new_chat_room(room_name, args[1])) ? update_room_list(NULL) : 0;
@@ -50,7 +50,7 @@ void	create_chat_room(t_client * client, const char ** args)
 	send_data(client->sockfd, msg, ft_strlen(msg) + 1, 0);
 }
 
-void	join_chat_room(t_client * client, const char ** args)
+void	join_chat_room(t_client *client, const char **args)
 {
 	const char	*msg;
 	t_dlist		*rooms;

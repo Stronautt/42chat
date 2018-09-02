@@ -1,48 +1,48 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   server_event.c                                     :+:      :+:    :+:   */
+/*   server.c                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: phrytsenko <phrytsenko@student.42.fr>      +#+  +:+       +#+        */
+/*   By: pgritsen <pgritsen@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2018/07/31 17:16:33 by pgritsen          #+#    #+#             */
-/*   Updated: 2018/08/03 17:55:52 by phrytsenko       ###   ########.fr       */
+/*   Updated: 2018/09/02 15:33:27 by pgritsen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "server.h"
 
-t_env	g_env = {0};
+t_env	g_env;
 
 int					read_client_msg(t_client *user)
 {
 	char		*msg;
 	char		*p_msg;
 	ssize_t		ml;
-	t_dlist		* clients;
-	t_chat_room	* chat_room;
+	t_dlist		*clients;
+	t_chat_room	*chat_room;
 
 	if ((ml = recieve_data(user->sockfd, (void **)&msg, 0, MSG_WAITALL)) < 0)
 		return (-1);
 	else if (msg_valid(msg) < 0)
-		return (_clean(msg));
+		return (h_clean(msg));
 	else if (treated_as_command(msg, ml, user))
-		return (_clean(msg));
+		return (h_clean(msg));
 	else if (!(p_msg = ft_strnew(ml + ft_strlen(user->nickname) + 16)))
-		return (_clean(msg));
+		return (h_clean(msg));
 	msg[ml - 1] = 0;
 	ml = sprintf(p_msg, MSG_POINT"[%s]: %s", user->nickname, msg);
-	p_msg[ml] = _clean(msg);
+	p_msg[ml] = h_clean(msg);
 	chat_room = user->chat_room_node->content;
 	dprintf(chat_room->log_fd, "%s\n", p_msg);
 	clients = chat_room->users;
 	while (clients && (clients = clients->next) != chat_room->users)
 		if (clients->content && clients != user->node_in_room)
 			send_msg(clients->content, p_msg, ml);
-	return (_clean(p_msg) + ml);
+	return (h_clean(p_msg) + ml);
 }
 
-void				listen_client(int fd, short ev, t_dlist * c_node)
+void				listen_client(int fd, short ev, t_dlist *c_node)
 {
 	t_client *user;
 
@@ -69,7 +69,7 @@ void				listen_client(int fd, short ev, t_dlist * c_node)
 
 void				handle_con(void)
 {
-	int					new_con;
+	int					new_c;
 	t_client			*new_client;
 	t_dlist				*c_node;
 	struct sockaddr_in	c_data;
@@ -77,16 +77,16 @@ void				handle_con(void)
 
 	if (!good_connection(g_env.msocket))
 		return ((void)log_errors(g_env.err_fd, init_socket()));
-	if ((new_con = accept(g_env.msocket, (struct sockaddr*)&c_data, &c_len)) < 0)
+	if ((new_c = accept(g_env.msocket, (struct sockaddr*)&c_data, &c_len)) < 0)
 		return ((void)log_errors(g_env.err_fd, strerror(errno)));
-	else if (!(new_client = ft_memalloc(sizeof(t_client))) && !close(new_con))
+	else if (!(new_client = ft_memalloc(sizeof(t_client))) && !close(new_c))
 		return ((void)log_errors(g_env.err_fd, strerror(errno)));
-	new_client->sockfd = new_con;
+	new_client->sockfd = new_c;
 	new_client->chat_room_node = g_env.all_rooms->next;
 	if (!(c_node = ft_dlstnew(new_client, sizeof(void *)))
-		&& !_clean(new_client) && !close(new_con))
+		&& !h_clean(new_client) && !close(new_c))
 		return ((void)log_errors(g_env.err_fd, strerror(errno)));
-	event_set(&new_client->ev, new_con, EV_READ | EV_PERSIST,
+	event_set(&new_client->ev, new_c, EV_READ | EV_PERSIST,
 		(void (*)(int, short, void *))&listen_client, c_node);
 	event_add(&new_client->ev, NULL);
 }
@@ -103,10 +103,9 @@ void				sig_handler(int sig)
 	static char	*signames[] = {
 		"Unknown", "SIGHUP", "SIGINT", "SIGQUIT", "SIGILL", "SIGTRAP", "SIGIOT",
 		"SIGBUS", "SIGFPE", "SIGKILL", "SIGUSR1", "SIGSEGV", "SIGUSR2",
-		"SIGPIPE", "SIGALRM", "SIGTERM", "SIGSTKFLT","SIGCHLD", "SIGCONT",
+		"SIGPIPE", "SIGALRM", "SIGTERM", "SIGSTKFLT", "SIGCHLD", "SIGCONT",
 		"SIGSTOP", "SIGTSTP", "SIGTTIN", "SIGTTOU", "SIGURG", "SIGXCPU",
-		"SIGXFSZ", "SIGVTALRM","SIGPROF", "SIGWINCH", "SIGIO", "SIGPWR"
-	};
+		"SIGXFSZ", "SIGVTALRM", "SIGPROF", "SIGWINCH", "SIGIO", "SIGPWR"};
 
 	if (sig < 0 || sig >= (int)(sizeof(signames) / sizeof(*signames)))
 		sig = 0;
@@ -122,13 +121,13 @@ int					main(void)
 	short int	sig;
 	pid_t		server_pid;
 
-	if ((server_pid = fork()))
-		return (server_pid < 0
-			? ft_printf("Server start failed!\n") * 0 + EXIT_FAILURE
-			: ft_printf("Server pid -> [%d]\n", server_pid) * 0);
+	if ((server_pid = fork()) < 0)
+		return (ft_printf("Server start failed!\n") * 0 - EXIT_FAILURE);
+	else if (server_pid > 0)
+		return (ft_printf("Server pid -> [%d]\n", server_pid) * 0);
 	server_pid = setsid();
 	event_init();
-	sig = 0;
+	ft_memset(&g_env, (sig = 0), sizeof(t_env));
 	while (++sig <= 30)
 		signal(sig != SIGKILL && sig != SIGSTOP ? sig : 1, sig_handler);
 	if ((g_env.sys_fd = open(LOG_SYS_PATH, O_LOG_FLAGS)) < 0

@@ -6,7 +6,7 @@
 /*   By: pgritsen <pgritsen@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2018/07/30 13:18:50 by pgritsen          #+#    #+#             */
-/*   Updated: 2018/08/26 21:40:30 by pgritsen         ###   ########.fr       */
+/*   Updated: 2018/09/02 15:07:37 by pgritsen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -40,7 +40,7 @@ static void		proceed_nickname(char *nickname)
 static void		proceed_msg(char *msg)
 {
 	char	tag[128];
-	char	* trimmed;
+	char	*trimmed;
 
 	trimmed = ft_strtrim(msg);
 	msg = trimmed;
@@ -53,7 +53,8 @@ static void		proceed_msg(char *msg)
 		g_env.connection_lost = 1;
 		render_call(display_chat, g_env.ws.chat);
 		while (try_reconnect() < 0
-			|| send_data(g_env.sockfd, trimmed, ft_strlen(trimmed) + 1, 0) < 0);
+			|| send_data(g_env.sockfd, trimmed, ft_strlen(trimmed) + 1, 0) < 0)
+			;
 		g_env.connection_lost = 0;
 	}
 	ft_dlstpush(&g_env.chat_history.lines,
@@ -68,7 +69,7 @@ static void		catch_line(char *line)
 {
 	if (g_env.term_size.ws_col < TERM_MIN_WIDTH
 		|| g_env.term_size.ws_row < TERM_MIN_HEIGHT)
-		return free(line);
+		return (free(line));
 	g_prevent_update = false;
 	if (line && *line && !g_env.nickname)
 		proceed_nickname(line);
