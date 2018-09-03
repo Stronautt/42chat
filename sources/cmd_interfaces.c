@@ -22,7 +22,9 @@ void	show_help(t_client *client)
 	"    3. /newroom [NAME] [PASSWORD]? -> Creates new room."
 	" Can be locked by [PASSWORD].\n"
 	"    4. /joinroom [NAME] [PASSWORD]? -> Relocates you to specified room."
-	" If it's locked, [PASSWORD] required.";
+	" If it's locked, [PASSWORD] required.\n"
+	"    5. /pm [NICKNAME] [MSG] -> Send private message.\n"
+	"    6. /block [NICKNAME] -> To block/unblock certain user.";
 	send_data(client->sockfd, help_msg, sizeof(help_msg), 0);
 }
 
