@@ -20,8 +20,7 @@ void	send_pm(t_client *client, const char **args)
 	char		*msg;
 	size_t		it;
 
-	err = NULL;
-	if (!args || !args[0] || !args[1])
+	if ((err = NULL) || !args || !args[0] || !args[1])
 		err = "* You should specify all parameters *";
 	else if (!(user_node = find_user_nickname(args[0], g_env.all_clients))
 		|| !(user = user_node->content))
@@ -39,7 +38,7 @@ void	send_pm(t_client *client, const char **args)
 	send_data(user->sockfd, msg, ft_strlen(msg) + 1, 0) < 0
 		&& (err = "* User is offline now *") ? disconnect_client(user_node) : 0;
 	!err ? err = "* Private message successfully sent *" : 0;
-	send_data(client->sockfd, err, ft_strlen(err) + 1, 0);
+	send_data(client->sockfd, err, ft_strlen(err) + 1, h_clean(msg));
 }
 
 void	block_user(t_client *client, const char **args)
