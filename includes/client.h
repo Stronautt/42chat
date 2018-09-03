@@ -32,6 +32,7 @@
 # define C_COLOR_RED 1
 # define C_COLOR_CYAN 2
 # define C_COLOR_GREEN 3
+# define C_COLOR_MAGENTA 4
 
 typedef struct	s_workspaces
 {

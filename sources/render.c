@@ -85,21 +85,23 @@ static void	draw_msg(int *l_n, const char *raw, WINDOW *tg, int *offset_row)
 	char	*u_name;
 	char	*msg;
 	bool	own_msg;
+	int		c;
 
 	if (!raw || (*offset_row && (*offset_row)--)
 		|| (*l_n -= ft_cinustr(raw) / (tg->_maxx + 4) + 1) < 0)
 		return ;
 	u_name = ft_get_content(raw, '[', ']');
 	own_msg = (u_name && *u_name == *SELF_POINT && u_name++ ? 1 : 0);
-	if (!u_name || !*u_name || !(msg = ft_strchr(raw, ':'))
-			|| !*msg || (raw && *(char *)raw != *MSG_POINT))
+	if (!u_name || !*u_name || !(msg = ft_strchr(raw, ':')) || !*msg
+		|| (*(char *)raw != *MSG_POINT && *(char *)raw != *PRIVATE_MSG_POINT))
 		mvwprintw(tg, *l_n, 0, raw);
 	else
 	{
+		c = *(char *)raw == *PRIVATE_MSG_POINT ? C_COLOR_MAGENTA : C_COLOR_CYAN;
 		mvwaddch(tg, *l_n, 0, '[');
-		wattron(tg, COLOR_PAIR(own_msg ? C_COLOR_GREEN : C_COLOR_CYAN));
+		wattron(tg, COLOR_PAIR(own_msg ? C_COLOR_GREEN : c));
 		wprintw(tg, "%s", u_name);
-		wattroff(tg, COLOR_PAIR(own_msg ? C_COLOR_GREEN : C_COLOR_CYAN));
+		wattroff(tg, COLOR_PAIR(own_msg ? C_COLOR_GREEN : c));
 		wprintw(tg, "]:%s", msg + 1);
 	}
 	free(u_name - own_msg);

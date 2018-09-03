@@ -37,13 +37,14 @@
 
 # define MSG_POINT "\01"
 # define ROOM_LOCKED "\03"
+# define PRIVATE_MSG_POINT "\04"
 
 # define MSG_MAX_LEN 255
 # define MAX_NICKNAME_LEN 15
 
 typedef enum	e_command
 {
-	NO_CMD = 0, UPDATE_USERS, UPDATE_ROOMS, UPDATE_HISTORY
+	NO_CMD = 0, UPDATE_USERS, UPDATE_ROOMS, UPDATE_HISTORY, RECONNECT
 }				t_command;
 
 typedef struct	s_packet

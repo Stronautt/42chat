@@ -197,6 +197,8 @@ int				ft_strnequ(char const *s1, char const *s2, size_t n);
 
 char			*ft_strsub(char const *s, unsigned int start, size_t len);
 
+char			*ft_vstrjoin(int n, ...);
+
 char			*ft_strjoin(char const *s1, char const *s2);
 
 char			*ft_strnjoin(char const *s1, char const *s2,
@@ -315,6 +317,8 @@ t_dlist			*ft_dlstnew(void *content, size_t content_size);
 void			ft_dlstpush(t_dlist **dest, t_dlist *src);
 
 void			ft_dlstpush_back(t_dlist **dest, t_dlist *src);
+
+void			ft_dlstdelelem_cs(t_dlist **del);
 
 void			ft_dlstdelelem(t_dlist **del);
 

@@ -38,6 +38,7 @@ typedef struct	s_client
 	char			nickname[(MAX_NICKNAME_LEN + 1) * 4];
 	t_dlist			*chat_room_node;
 	t_dlist			*node_in_room;
+	t_dlist			*blacklist;
 }				t_client;
 
 typedef struct	s_chat_room
@@ -105,7 +106,7 @@ void			handle_con(void);
 
 void			listen_client(int fd, short ev, t_dlist *c_node);
 
-int				read_client_msg(t_client *user);
+int				read_client_msg(t_client *user, t_command *cmd);
 
 /*
 **				System.c
@@ -128,9 +129,9 @@ void			disconnect_client(t_dlist *client_node);
 **				↓↓↓↓↓↓↓↓↓↓↓↓↓
 */
 
-int				get_nickname(t_client *client);
+int				get_nickname(t_client *client, t_command *cmd);
 
-void			send_msg(t_client *client, const char *msg, ssize_t msg_l);
+ssize_t			send_msg(t_client *client, const char *msg, ssize_t msg_l);
 
 int				msg_valid(char *msg);
 
@@ -166,9 +167,21 @@ void			create_chat_room(t_client *client, const char **args);
 void			join_chat_room(t_client *client, const char **args);
 
 /*
+**				Cmd_interfaces_2.c
+**				↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
+*/
+
+void			send_pm(t_client *client, const char **args);
+
+void			block_user(t_client *client, const char **args);
+
+/*
 **				Cmd_helpers.c
 **				↓↓↓↓↓↓↓↓↓↓↓↓↓
 */
+
+t_dlist			*find_user_nickname(const char *nickname, t_dlist *list);
+t_dlist			*find_user_addr(void *addr, t_dlist *list);
 
 const char		*validate_room_data(const char **args, t_dlist **rooms,
 									const t_client *client, t_client **c_dup);

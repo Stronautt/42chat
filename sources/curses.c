@@ -64,7 +64,7 @@ static void		resize_windows(struct winsize size, const short s_w)
 void			resize_curses(void)
 {
 	int				offset;
-	const short		s_w = MAX_NICKNAME_LEN + 2;
+	const short		s_w = MAX_NICKNAME_LEN + 5;
 
 	ioctl(fileno(stdout), TIOCGWINSZ, (char *)&g_env.term_size);
 	resizeterm(g_env.term_size.ws_row, g_env.term_size.ws_col);
@@ -90,18 +90,18 @@ void			resize_curses(void)
 
 void			init_design(void)
 {
-	const short	s_w = 20;
+	const short	s_w = MAX_NICKNAME_LEN + 5;
 
 	initscr();
 	cbreak();
 	noecho();
 	signal(SIGWINCH, (void (*)(int))resize_curses);
 	has_colors() == false ? curses_exit((void (*)())ft_printf,
-		"Your terminal does not support color\n") : 0;
-	start_color();
+		"Your terminal does not support color\n") : start_color();
 	init_pair(C_COLOR_RED, COLOR_RED, COLOR_BLACK);
 	init_pair(C_COLOR_CYAN, COLOR_CYAN, COLOR_BLACK);
 	init_pair(C_COLOR_GREEN, COLOR_GREEN, COLOR_BLACK);
+	init_pair(C_COLOR_MAGENTA, COLOR_MAGENTA, COLOR_BLACK);
 	g_env.ws.input_b = newwin(3, COLS, LINES - 3, 0);
 	g_env.ws.chat_b = newwin(LINES - 3, COLS - s_w, 0, 0);
 	g_env.ws.u_online_b = newwin(ceil((LINES - 3) / 2.0), s_w, 0, COLS - s_w);

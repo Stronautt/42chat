@@ -59,8 +59,9 @@ void	update_clients_data(t_chat_room *room)
 	data_len = ft_strlen(data);
 	user = room->users;
 	while (user && (user = user->next) != room->users)
-		send_data(((t_client *)user->content)->sockfd,
-					data, data_len + 1, UPDATE_USERS);
+		if (send_data(((t_client *)user->content)->sockfd,
+				data, data_len + 1, UPDATE_USERS) < 0 && (user = user->prev))
+			disconnect_client(user->next);
 	free(data);
 }
 
@@ -74,8 +75,10 @@ void	update_room_list(t_client *client)
 		send_data(client->sockfd, r_list, ft_strlen(r_list) + 1, UPDATE_ROOMS);
 	else if ((client_node = g_env.all_clients))
 		while ((client_node = client_node->next) != g_env.all_clients)
-			send_data(((t_client *)client_node->content)->sockfd, r_list,
-				ft_strlen(r_list) + 1, UPDATE_ROOMS);
+			if (send_data(((t_client *)client_node->content)->sockfd, r_list,
+					ft_strlen(r_list) + 1, UPDATE_ROOMS) < 0
+				&& (client_node = client_node->prev))
+				disconnect_client(client_node->next);
 	free(r_list);
 }
 

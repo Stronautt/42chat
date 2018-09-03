@@ -39,7 +39,7 @@ SRCS		= 	ft_lstnew.c ft_strcat.c ft_strncpy.c ft_memalloc.c ft_strchr.c		\
 				ft_dlstclear.c ft_get_fractional.c ft_get_content.c ft_atof.c		\
 				ft_memjoin.c ft_dlstindex.c ft_strsplit_dlst.c ft_clamp.c			\
 				ft_cinustr.c ft_cinustrn.c ft_cinustrcn.c ft_dlstmerge.c			\
-				ft_str_replace.c
+				ft_str_replace.c ft_vstrjoin.c ft_dlstdelelem_cs.c
 
 HDRS		=	ftprintf.h libft.h ftstring.h
 

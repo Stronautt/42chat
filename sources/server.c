@@ -14,21 +14,18 @@
 
 t_env	g_env;
 
-int					read_client_msg(t_client *user)
+int					read_client_msg(t_client *user, t_command *cmd)
 {
+	ssize_t		ml;
 	char		*msg;
 	char		*p_msg;
-	ssize_t		ml;
 	t_dlist		*clients;
 	t_chat_room	*chat_room;
 
-	if ((ml = recieve_data(user->sockfd, (void **)&msg, 0, MSG_WAITALL)) < 0)
+	if ((ml = recieve_data(user->sockfd, (void **)&msg, cmd, MSG_WAITALL)) < 0)
 		return (-1);
-	else if (msg_valid(msg) < 0)
-		return (h_clean(msg));
-	else if (treated_as_command(msg, ml, user))
-		return (h_clean(msg));
-	else if (!(p_msg = ft_strnew(ml + ft_strlen(user->nickname) + 16)))
+	else if (!ml || msg_valid(msg) < 0 || treated_as_command(msg, ml, user)
+		|| !(p_msg = ft_strnew(ml + ft_strlen(user->nickname) + 16)))
 		return (h_clean(msg));
 	msg[ml - 1] = 0;
 	ml = sprintf(p_msg, MSG_POINT"[%s]: %s", user->nickname, msg);
@@ -37,14 +34,17 @@ int					read_client_msg(t_client *user)
 	dprintf(chat_room->log_fd, "%s\n", p_msg);
 	clients = chat_room->users;
 	while (clients && (clients = clients->next) != chat_room->users)
-		if (clients->content && clients != user->node_in_room)
-			send_msg(clients->content, p_msg, ml);
+		if (clients->content && clients != user->node_in_room
+			&& send_msg(clients->content, p_msg, ml) < 0
+			&& (clients = clients->prev))
+				disconnect_client(clients->next);
 	return (h_clean(p_msg) + ml);
 }
 
 void				listen_client(int fd, short ev, t_dlist *c_node)
 {
-	t_client *user;
+	t_client 	*user;
+	t_command	cmd;
 
 	(void)fd;
 	(void)ev;
@@ -52,9 +52,9 @@ void				listen_client(int fd, short ev, t_dlist *c_node)
 		return ;
 	else if (!*user->nickname)
 	{
-		if (get_nickname(user) < 0)
+		if (get_nickname(user, &cmd) < 0)
 			return (disconnect_client(c_node));
-		sync_chat_history(user);
+		cmd == NO_CMD ? sync_chat_history(user) : 0;
 		ft_dlstpush(&((t_chat_room *)user->chat_room_node->content)->users,
 			(user->node_in_room = ft_dlstnew(ft_memcpy(malloc(sizeof(t_client)),
 								user, sizeof(t_client)), sizeof(void *))));
@@ -63,7 +63,7 @@ void				listen_client(int fd, short ev, t_dlist *c_node)
 		update_clients_data(user->chat_room_node->content);
 		update_room_list(user);
 	}
-	else if (read_client_msg(user) < 0)
+	else if (read_client_msg(user, &cmd) < 0)
 		return (disconnect_client(c_node));
 }
 

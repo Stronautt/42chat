@@ -12,6 +12,29 @@
 
 #include "server.h"
 
+t_dlist		*find_user_nickname(const char *nickname, t_dlist *list)
+{
+	t_dlist		*ret;
+	t_client	*user;
+
+	ret = list;
+	while (ret && (ret = ret->next) != list)
+		if ((user = ret->content) && !strcasecmp(user->nickname, nickname))
+			return (ret);
+	return (NULL);
+}
+
+t_dlist		*find_user_addr(void *addr, t_dlist *list)
+{
+	t_dlist		*ret;
+
+	ret = list;
+	while (ret && (ret = ret->next) != list)
+		if (addr == ret->content)
+			return (ret);
+	return (NULL);
+}
+
 const char	*validate_room_data(const char **args, t_dlist **rooms,
 								const t_client *client, t_client **c_dup)
 {

@@ -71,7 +71,7 @@ int				try_reconnect(void)
 						sizeof(g_env.conn_data)) < 0)
 		return (-1);
 	else if (send_data(g_env.sockfd, g_env.nickname,
-						ft_strlen(g_env.nickname) + 1, 0) < 0)
+						ft_strlen(g_env.nickname) + 1, RECONNECT) < 0)
 		return (-1);
 	event_del(&g_env.ev_getmsg);
 	event_set(&g_env.ev_getmsg, g_env.sockfd, EV_READ | EV_PERSIST,
