@@ -9,17 +9,25 @@ case "${unameOut}" in
     *)          machine="UNKNOWN:${unameOut}"
 esac
 
-if [[ $machine -eq "Linux" ]]; then
+unameOut=`uname -o`
+case "${unameOut}" in
+    GNU\/Linux*) opsystem=Linux;;
+    Android*)   opsystem=Android;;
+    *)          opsystem="UNKNOWN:${unameOut}"
+esac
+
+if [[ $machine == "Linux" ]]; then
 	mkdir -p ./logs;
-	if [[ ! -z $(command -v apt-get) ]]; then
+
+	if [[ $opsystem == "Linux" ]]; then
 		sudo apt-get update;
 		sudo apt-get install -y gcc make libncurses5-dev libncursesw5-dev	\
 								libevent-dev libreadline-dev;
-	elif [[ ! -z $(command -v pkg) ]]; then
+	elif [[ $opsystem == "Android" ]]; then
 		pkg update -y;
 		pkg install -y clang make ncurses-dev libevent-dev readline-dev;
 	fi
-elif [[ $machine -eq "Mac" ]]; then
+elif [[ $machine == "Mac" ]]; then
 	mkdir -p ./logs;
 	brew update;
 	curl -fsSL https://rawgit.com/kube/42homebrew/master/install.sh | zsh;
