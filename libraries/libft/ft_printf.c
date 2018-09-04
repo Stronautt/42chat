@@ -301,7 +301,7 @@ inline static void		parse_conversions(const char **fmt,
 	(c.size == 8 && c.lf && !f.p_f) || c.size == 1 || c.size == 2
 		? f.p = FTCALL(c.lf, -1, types, c.size) : 0;
 	it = c.lf ? FTCALL(c.lf, f.p, types, c.size) : 1;
-	(*c_p) += arg_zero(types, c) && !f.p ? (it = 0) : it;
+	(*c_p) += (arg_zero(types, c) && !f.p) ? (it = 0) : it;
 	(!it && arg_zero(types, c) && f.prefix && c.superp) ? (*c_p)++ : 0;
 	parse_flags(f, &c, types, c_p);
 }

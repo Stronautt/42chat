@@ -29,11 +29,10 @@ void	send_pm(t_client *client, const char **args)
 		err = "* Sir, you have schizophrenia ;) *";
 	else if (find_user_addr(client, user->blacklist))
 		err = "* You are in user's blacklist! *";
-	if (err)
+	if (err || (!(msg = malloc((int)MAX_NICKNAME_LEN * 8 + 16))))
 		return ((void)send_data(client->sockfd, err, ft_strlen(err) + 1, 0));
-	msg = malloc((int)MAX_NICKNAME_LEN * 8 + 16);
 	it = sprintf(msg, PRIVATE_MSG_POINT"[%s]:", client->nickname) * 0;
-	while (args[++it])
+	while (args && args[++it])
 		msg = ft_vstrjoin(3, msg, " ", args[it]) - h_clean(msg);
 	send_data(user->sockfd, msg, ft_strlen(msg) + 1, 0) < 0
 		&& (err = "* User is offline now *") ? disconnect_client(user_node) : 0;

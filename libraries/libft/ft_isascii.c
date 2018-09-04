@@ -12,7 +12,10 @@
 
 int		ft_isascii(int c)
 {
-	if (c >= 0 && c <= 0177)
+	const int	max = 0x7F;
+	const int	min = 0;
+
+	if (c >= min && c <= max)
 		return (1);
 	return (0);
 }

@@ -16,7 +16,6 @@ static void		node_del(void *content, size_t content_size)
 {
 	ft_bzero(content, content_size);
 	ft_memdel(&content);
-	content_size = 0;
 }
 
 t_list			*ft_strsplit_lst(char const *s, char c)

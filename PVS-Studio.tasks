@@ -1,0 +1,43 @@
+www.viva64.com/en/w	1	err	Help: The documentation for all analyzer warnings is available here: https://www.viva64.com/en/w/.
+ 	1	err	Renew Your license will expire in 8 days. Click 'Renew' to learn more or contact us at support@viva64.com.
+/home/phrytsenko/fun_staff/42chat/libraries/libft/ft_putchar_fd.c	17	warn	V1001 The 'c' variable is assigned but is not used by the end of the function.
+/home/phrytsenko/fun_staff/42chat/libraries/libft/ft_putendl.c	20	warn	V1001 The 's' variable is assigned but is not used by the end of the function.
+/home/phrytsenko/fun_staff/42chat/libraries/libft/ft_putendl_fd.c	20	warn	V1001 The 'fd' variable is assigned but is not used by the end of the function.
+/home/phrytsenko/fun_staff/42chat/libraries/libft/ft_putstr.c	19	warn	V1001 The 's' variable is assigned but is not used by the end of the function.
+/home/phrytsenko/fun_staff/42chat/libraries/libft/ft_putstr.c	38	warn	V1001 The 'tmp' variable is assigned but is not used by the end of the function.
+/home/phrytsenko/fun_staff/42chat/libraries/libft/ft_putstr_fd.c	19	warn	V1001 The 'fd' variable is assigned but is not used by the end of the function.
+/home/phrytsenko/fun_staff/42chat/libraries/libft/ft_printf.c	211	warn	V560 A part of conditional expression is always true: (f->prefix = 1).
+/home/phrytsenko/fun_staff/42chat/libraries/libft/ft_printf.c	213	warn	V560 A part of conditional expression is always true: (f->l_j = 1).
+/home/phrytsenko/fun_staff/42chat/libraries/libft/ft_printf.c	214	warn	V560 A part of conditional expression is always true: (f->fill = ' ').
+/home/phrytsenko/fun_staff/42chat/libraries/libft/ft_printf.c	216	warn	V560 A part of conditional expression is always true: (f->fill = '0').
+/home/phrytsenko/fun_staff/42chat/libraries/libft/ft_printf.c	218	warn	V560 A part of conditional expression is always true: (f->p_s = '+').
+/home/phrytsenko/fun_staff/42chat/libraries/libft/ft_printf.c	220	warn	V560 A part of conditional expression is always true: (f->p_s = ' ').
+/home/phrytsenko/fun_staff/42chat/libraries/libft/ft_printf.c	225	warn	V793 It is odd that the result of the '(tmp = ft_skipdigits(fmt)) + 1' statement is a part of the condition. Perhaps, this statement should have been compared with something else.
+/home/phrytsenko/fun_staff/42chat/libraries/libft/ft_printf.c	227	warn	V560 A part of conditional expression is always true: (f->p_f = 1).
+/home/phrytsenko/fun_staff/42chat/libraries/libft/ft_printf.c	228	warn	V793 It is odd that the result of the '(f->p = ft_atoll(fmt + 1)) + 1' statement is a part of the condition. Perhaps, this statement should have been compared with something else.
+/home/phrytsenko/fun_staff/42chat/libraries/libft/ft_printf.c	229	warn	V793 It is odd that the result of the '(tmp = ft_skipdigits(fmt + 1)) + 1' statement is a part of the condition. Perhaps, this statement should have been compared with something else.
+/home/phrytsenko/fun_staff/42chat/libraries/libft/ft_printf.c	231	warn	V560 A part of conditional expression is always true: (f->p_f = 1).
+/home/phrytsenko/fun_staff/42chat/libraries/libft/ft_printf.c	234	warn	V560 A part of conditional expression is always true: !(f->p = 0).
+/home/phrytsenko/fun_staff/42chat/libraries/libft/ft_printf.c	235	warn	V560 A part of conditional expression is always true: (f->p_f = 1).
+/home/phrytsenko/fun_staff/42chat/libraries/libft/ft_printf.c	242	warn	V560 A part of conditional expression is always true: (f.l_j = 1).
+/home/phrytsenko/fun_staff/42chat/libraries/libft/ft_printf.c	297	warn	V560 A part of conditional expression is always true: !(f.p_s = 0).
+/home/phrytsenko/fun_staff/42chat/libraries/libft/ft_printfh.c	60	warn	V560 A part of conditional expression is always true: (neg = 1).
+/home/phrytsenko/fun_staff/42chat/libraries/libft/ft_printfh.c	66	warn	V560 A part of conditional expression is always true: (neg = 1).
+/home/phrytsenko/fun_staff/42chat/libraries/libft/ft_printfh.c	72	warn	V560 A part of conditional expression is always true: (neg = 1).
+/home/phrytsenko/fun_staff/42chat/libraries/libft/ft_printfh.c	75	warn	V560 A part of conditional expression is always true: (neg = 1).
+/home/phrytsenko/fun_staff/42chat/libraries/libft/ft_printfh.c	105	warn	V560 A part of conditional expression is always true: p <= 0.
+/home/phrytsenko/fun_staff/42chat/sources/msg_helpers.c	41	warn	V560 A part of conditional expression is always true: (it = 1).
+/home/phrytsenko/fun_staff/42chat/sources/msg_helpers.c	106	warn	V560 A part of conditional expression is always false: !args.
+/home/phrytsenko/fun_staff/42chat/sources/msg_helpers_2.c	24	warn	V575 The potential null pointer is passed into 'sprintf' function. Inspect the first argument. Check lines: 24, 23.
+/home/phrytsenko/fun_staff/42chat/sources/cmd_interfaces_2.c	23	warn	V560 A part of conditional expression is always false: (err = NULL).
+/home/phrytsenko/fun_staff/42chat/sources/cmd_interfaces_2.c	37	err	V614 Potentially uninitialized pointer 'user' used.
+/home/phrytsenko/fun_staff/42chat/sources/cmd_interfaces_2.c	38	warn	V560 A part of conditional expression is always true: (err = "* User is offline now *").
+/home/phrytsenko/fun_staff/42chat/sources/render.c	91	warn	V1019 Compound assignment expression is used inside condition.
+/home/phrytsenko/fun_staff/42chat/sources/render.c	94	warn	V560 A part of conditional expression is always true: u_name ++.
+/home/phrytsenko/fun_staff/42chat/sources/render.c	107	warn	V1004 The 'u_name' pointer was used unsafely after it was verified against nullptr. Check lines: 95, 107.
+/home/phrytsenko/fun_staff/42chat/sources/io.c	21	warn	V560 A part of conditional expression is always true: (g_prevent_update = 1).
+/home/phrytsenko/fun_staff/42chat/sources/io.c	23	warn	V560 A part of conditional expression is always true: (g_prevent_update = 1).
+/home/phrytsenko/fun_staff/42chat/sources/io.c	32	warn	V547 Expression 'err' is always true.
+/home/phrytsenko/fun_staff/42chat/sources/key_handler.c	63	warn	V560 A part of conditional expression is always true: ++ ret.
+/home/phrytsenko/fun_staff/42chat/sources/key_handler.c	72	warn	V560 A part of conditional expression is always true: ++ ret.
+	1	err	Renew Your license will expire in 7 days. Contact us at support@viva64.com.
