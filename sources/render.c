@@ -88,8 +88,8 @@ static void	draw_msg(int *l_n, const char *raw, WINDOW *tg, int *offset_row)
 	int		c;
 
 	c = ft_cinustr(raw) / (tg->_maxx + 3) + 1;
-	g_env.layot.chat_msg_h_corr += c - 1;
-	if (!raw || (*offset_row > 0 && (*offset_row)-- > 0) || (*l_n -= c) < 0)
+	if (!raw || (*offset_row > 0 && (*offset_row)-- > 0)
+	    || ((g_env.layot.chat_msg_h_corr += c - 1) * 0 == 0 && (*l_n -= c) < 0))
 		return ;
 	u_name = ft_get_content(raw, '[', ']');
 	own_msg = (u_name && *u_name == *SELF_POINT && u_name++ ? 1 : 0);
