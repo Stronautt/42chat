@@ -49,6 +49,7 @@ typedef struct	s_workspaces
 typedef struct	s_layot
 {
 	uint				chat_offset;
+	uint				chat_msg_h_corr;
 	uint				u_online_offset;
 	uint				rooms_a_offset;
 }				t_layot;

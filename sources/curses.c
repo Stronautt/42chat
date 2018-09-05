@@ -23,8 +23,8 @@ static void		redraw_windows(const short s_w)
 	mvwprintw(g_env.ws.rooms_a_b, 0, (s_w - 9) / 2, "> Rooms <");
 	wrefresh(g_env.ws.u_online_b);
 	wrefresh(g_env.ws.rooms_a_b);
-	g_env.layot.chat_offset + g_env.ws.chat->_maxy
-		> g_env.chat_history.size ? g_env.layot.chat_offset = 0 : 0;
+	g_env.layot.chat_offset + g_env.ws.chat->_maxy - g_env.layot.chat_msg_h_corr
+		+ 1	> g_env.chat_history.size ? g_env.layot.chat_offset = 0 : 0;
 	g_env.layot.u_online_offset + g_env.ws.u_online->_maxy
 		> g_env.users_online.size ? g_env.layot.u_online_offset = 0 : 0;
 	g_env.layot.rooms_a_offset + g_env.ws.rooms_a->_maxy
@@ -68,20 +68,14 @@ void			resize_curses(void)
 
 	ioctl(fileno(stdout), TIOCGWINSZ, (char *)&g_env.term_size);
 	resizeterm(g_env.term_size.ws_row, g_env.term_size.ws_col);
-	g_env.term_size.ws_row = stdscr->_maxy + 1;
-	g_env.term_size.ws_col = stdscr->_maxx + 1;
 	if (g_env.term_size.ws_col < TERM_MIN_WIDTH
 		|| g_env.term_size.ws_row < TERM_MIN_HEIGHT)
 	{
 		offset = (g_env.term_size.ws_col - s_w) / 2;
 		curs_set(0);
 		erase();
-		g_env.ws.input->_begy = g_env.term_size.ws_row - 2;
-		wresize(g_env.ws.input, 1, g_env.term_size.ws_col - 2);
 		werase(g_env.ws.input);
-		offset < 0 ? offset = 0 : 0;
-		mvprintw(g_env.term_size.ws_row / 2, offset, "Window too small!");
-		wrefresh(g_env.ws.input);
+		mvprintw(g_env.term_size.ws_row / 2, offset < 0 ? 0 : offset, "Window too small!");
 		refresh();
 	}
 	else

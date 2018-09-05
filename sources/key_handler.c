@@ -85,8 +85,9 @@ void		handle_uni_key(uint64_t utf)
 
 	if (utf == RL_KEY_UP)
 	{
-		g_env.layot.chat_offset + g_env.ws.chat->_maxy + 1 <
-			g_env.chat_history.size ? g_env.layot.chat_offset++ : (uint)beep();
+		g_env.layot.chat_offset + g_env.ws.chat->_maxy + 1
+			- g_env.layot.chat_msg_h_corr < g_env.chat_history.size
+			? g_env.layot.chat_offset++ : (uint)beep();
 		render_call(display_chat, g_env.ws.chat);
 	}
 	else if (utf == RL_KEY_DOWN)

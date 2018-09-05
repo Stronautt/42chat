@@ -87,8 +87,9 @@ static void	draw_msg(int *l_n, const char *raw, WINDOW *tg, int *offset_row)
 	bool	own_msg;
 	int		c;
 
-	if (!raw || (*offset_row && (*offset_row)--)
-		|| (*l_n -= ft_cinustr(raw) / (tg->_maxx + 4) + 1) < 0)
+	c = ft_cinustr(raw) / (tg->_maxx + 3) + 1;
+	g_env.layot.chat_msg_h_corr += c - 1;
+	if (!raw || (*offset_row > 0 && (*offset_row)-- > 0) || (*l_n -= c) < 0)
 		return ;
 	u_name = ft_get_content(raw, '[', ']');
 	own_msg = (u_name && *u_name == *SELF_POINT && u_name++ ? 1 : 0);
@@ -129,6 +130,7 @@ void		display_chat(void)
 		l_n = g_env.ws.chat->_maxy + 1;
 		msg = g_env.chat_history.lines;
 		offset = g_env.layot.chat_offset;
+		g_env.layot.chat_msg_h_corr = 0;
 		while (msg && (msg = msg->next) != g_env.chat_history.lines && l_n > 0)
 			draw_msg(&l_n, msg->content, g_env.ws.chat, &offset);
 	}
