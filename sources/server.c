@@ -54,7 +54,7 @@ void				listen_client(int fd, short ev, t_dlist *c_node)
 	{
 		if (get_nickname(user, &cmd) < 0)
 			return (disconnect_client(c_node));
-		cmd == NO_CMD ? sync_chat_history(user) : 0;
+		sync_chat_history(user);
 		ft_dlstpush(&((t_chat_room *)user->chat_room_node->content)->users,
 			(user->node_in_room = ft_dlstnew(ft_memcpy(malloc(sizeof(t_client)),
 								user, sizeof(t_client)), sizeof(void *))));
