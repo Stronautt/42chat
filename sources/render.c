@@ -87,7 +87,8 @@ static void	draw_msg(int *l_n, const char *raw, WINDOW *tg, int *offset_row)
 	bool	own_msg;
 	int		c;
 
-	c = ft_cinustr(raw) / (tg->_maxx + 3) + 1;
+	c = ft_cinustr(raw && (*(char *)raw == *MSG_POINT || *(char *)raw ==
+		*PRIVATE_MSG_POINT) ? ft_strchr(raw, '[') : raw) / (tg->_maxx + 2) + 1;
 	if (!raw || (*offset_row > 0 && (*offset_row)-- > 0)
 		|| ((g_env.layot.chat_msg_h_corr += c - 1) * 0 == 0 && (*l_n -= c) < 0))
 		return ;
