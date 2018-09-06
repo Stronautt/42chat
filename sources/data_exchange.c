@@ -64,7 +64,6 @@ ssize_t		recieve_data(int sockfd, void **data,
 							t_command *command, int flags)
 {
 	t_packet	packet;
-	ssize_t		ret;
 	void		*tmp;
 	uint64_t	tmp_crs;
 
@@ -73,16 +72,16 @@ ssize_t		recieve_data(int sockfd, void **data,
 		return (-1);
 	else if (recv(sockfd, &packet, sizeof(t_packet), flags) < 0)
 		return (-1);
-	else if (packet.size > INT32_MAX / 2)
+	else if (packet.size < 0 || packet.size > INT32_MAX / 2)
 		return (-1);
 	else if (!(tmp = ft_memalloc(packet.size)))
 		return (-1);
-	else if ((ret = recv(sockfd, tmp, packet.size, flags)) < 0)
+	else if ((packet.size = recv(sockfd, tmp, packet.size, flags)) < 0)
 		return (h_clean(tmp) - 1);
 	tmp_crs = hash_data(tmp, packet.size);
 	if (packet.crs_sum != tmp_crs + (tmp_crs << (packet.size % 5)) + packet.cmd)
 		return (h_clean(tmp) - 1);
 	data ? *data = tmp : free(tmp);
 	command ? *command = packet.cmd : 0;
-	return (ret);
+	return (packet.size);
 }

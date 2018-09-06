@@ -50,7 +50,7 @@ typedef enum	e_command
 
 typedef struct	s_packet
 {
-	size_t		size;
+	ssize_t		size;
 	uint64_t	crs_sum;
 	t_command	cmd;
 }				t_packet;
