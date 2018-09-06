@@ -97,7 +97,7 @@ void	disconnect_client(t_dlist *client_node)
 		log_client_actions(client, "DISCONNECTED", "left the chat");
 	event_del(&client->ev);
 	close(client->sockfd);
-	ft_dlstdelelem(&client->node_in_room);
+	ft_dlstdelelem_cs(&client->node_in_room);
 	ft_dlstdelelem(&client_node);
 	update_clients_data(room);
 }

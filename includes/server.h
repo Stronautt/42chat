@@ -131,7 +131,8 @@ void			disconnect_client(t_dlist *client_node);
 
 int				get_nickname(t_client *client, t_command *cmd);
 
-ssize_t			send_msg(t_client *client, const char *msg, ssize_t msg_l);
+ssize_t			send_msg(t_client *client, const char *msg,
+							ssize_t msg_l, uint8_t self);
 
 int				msg_valid(char *msg);
 
@@ -184,8 +185,9 @@ t_dlist			*find_user_nickname(const char *nickname, t_dlist *list);
 t_dlist			*find_user_addr(void *addr, t_dlist *list);
 
 const char		*validate_room_data(const char **args, t_dlist **rooms,
-									const t_client *client, t_client **c_dup);
+									const t_client *client);
 
-const char		*new_chat_room(const char *name, const char *passwd);
+const char		*new_chat_room(const char *name,
+								const char *passwd, uint8_t unique);
 
 #endif

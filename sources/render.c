@@ -89,10 +89,10 @@ static void	draw_msg(int *l_n, const char *raw, WINDOW *tg, int *offset_row)
 
 	c = ft_cinustr(raw) / (tg->_maxx + 3) + 1;
 	if (!raw || (*offset_row > 0 && (*offset_row)-- > 0)
-	    || ((g_env.layot.chat_msg_h_corr += c - 1) * 0 == 0 && (*l_n -= c) < 0))
+		|| ((g_env.layot.chat_msg_h_corr += c - 1) * 0 == 0 && (*l_n -= c) < 0))
 		return ;
 	u_name = ft_get_content(raw, '[', ']');
-	own_msg = (u_name && *u_name == *SELF_POINT && u_name++ ? 1 : 0);
+	own_msg = (raw && *(raw + 1) == *SELF_POINT ? 1 : 0);
 	if (!u_name || !*u_name || !(msg = ft_strchr(raw, ':')) || !*msg
 		|| (*(char *)raw != *MSG_POINT && *(char *)raw != *PRIVATE_MSG_POINT))
 		mvwprintw(tg, *l_n, 0, raw);
@@ -105,7 +105,7 @@ static void	draw_msg(int *l_n, const char *raw, WINDOW *tg, int *offset_row)
 		wattroff(tg, COLOR_PAIR(own_msg ? C_COLOR_GREEN : c));
 		wprintw(tg, "]:%s", msg + 1);
 	}
-	free(u_name - own_msg);
+	free(u_name);
 }
 
 void		display_chat(void)

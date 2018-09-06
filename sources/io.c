@@ -57,10 +57,6 @@ static void		proceed_msg(char *msg)
 			;
 		g_env.connection_lost = 0;
 	}
-	ft_dlstpush(&g_env.chat_history.lines,
-		ft_dlstnew(ft_strjoin(tag, trimmed), sizeof(void *)));
-	g_env.chat_history.size++;
-	render_call(display_chat, g_env.ws.chat);
 	free(trimmed);
 	free(msg);
 }

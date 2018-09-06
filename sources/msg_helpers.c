@@ -52,12 +52,19 @@ int					get_nickname(t_client *client, t_command *cmd)
 		sizeof(client->nickname), 0) < 0 ? h_clean(nname) - 1 : h_clean(nname));
 }
 
-ssize_t				send_msg(t_client *client, const char *msg, ssize_t msg_l)
+ssize_t				send_msg(t_client *client, const char *msg,
+							ssize_t msg_l, uint8_t self)
 {
 	char	*ld_m;
 
 	if (!client || !msg)
 		return (-1);
+	else if (self)
+	{
+		ld_m = ft_strnew(msg_l + 1);
+		sprintf(ld_m, "%c%c%s", *msg, *SELF_POINT, msg + 1);
+		return (send_data(client->sockfd, ld_m, msg_l + 2, 0) - h_clean(ld_m));
+	}
 	else if (!client->silent_mode && (ld_m = ft_strjoin("\a", msg)))
 		return (send_data(client->sockfd, ld_m, msg_l + 2, 0) - h_clean(ld_m));
 	else

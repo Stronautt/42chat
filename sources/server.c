@@ -34,8 +34,7 @@ int					read_client_msg(t_client *user, t_command *cmd)
 	dprintf(chat_room->log_fd, "%s\n", p_msg);
 	clients = chat_room->users;
 	while (clients && (clients = clients->next) != chat_room->users)
-		if (clients->content && clients != user->node_in_room
-			&& send_msg(clients->content, p_msg, ml) < 0
+		if (send_msg(clients->content, p_msg, ml, clients->content == user) < 0
 			&& (clients = clients->prev))
 				disconnect_client(clients->next);
 	return (h_clean(p_msg) + ml);
@@ -55,9 +54,9 @@ void				listen_client(int fd, short ev, t_dlist *c_node)
 		if (get_nickname(user, &cmd) < 0)
 			return (disconnect_client(c_node));
 		sync_chat_history(user);
+		user->node_in_room = ft_dlstnew(user, sizeof(void *));
 		ft_dlstpush(&((t_chat_room *)user->chat_room_node->content)->users,
-			(user->node_in_room = ft_dlstnew(ft_memcpy(malloc(sizeof(t_client)),
-								user, sizeof(t_client)), sizeof(void *))));
+			user->node_in_room);
 		ft_dlstpush(&g_env.all_clients, c_node);
 		log_client_actions(user, "CONNECTED", "joined the chat");
 		update_clients_data(user->chat_room_node->content);
@@ -133,7 +132,7 @@ int					main(void)
 	if ((g_env.sys_fd = open(LOG_SYS_PATH, O_LOG_FLAGS)) < 0
 			|| (g_env.err_fd = open(LOG_ERR_PATH, O_LOG_FLAGS)) < 0)
 		return (EXIT_FAILURE);
-	else if ((err = new_chat_room("general", 0)))
+	else if ((err = new_chat_room("general", 0, 0)))
 		return (log_errors(g_env.err_fd, err) * 0 + EXIT_FAILURE);
 	else if ((err = init_socket()))
 		return (log_errors(g_env.err_fd, err) * 0 + EXIT_FAILURE);

@@ -36,11 +36,11 @@ t_dlist		*find_user_addr(void *addr, t_dlist *list)
 }
 
 const char	*validate_room_data(const char **args, t_dlist **rooms,
-								const t_client *client, t_client **c_dup)
+								const t_client *client)
 {
 	char		*room_name;
 
-	if (!args || !rooms || !client || !c_dup)
+	if (!args || !rooms || !client)
 		return ("* Incorrect data passed *");
 	*rooms = g_env.all_rooms;
 	room_name = ft_strtrim(args[0]);
@@ -49,7 +49,7 @@ const char	*validate_room_data(const char **args, t_dlist **rooms,
 	while (*rooms && (*rooms = (*rooms)->next) != g_env.all_rooms)
 		if (!strcasecmp(((t_chat_room *)(*rooms)->content)->name, room_name))
 			break ;
-	*c_dup = h_clean(room_name) ? NULL : NULL;
+	h_clean(room_name);
 	if (!*rooms || *rooms == g_env.all_rooms)
 		return ("* Room with this name doesn't exists *");
 	else if (*rooms == client->chat_room_node)
@@ -59,13 +59,10 @@ const char	*validate_room_data(const char **args, t_dlist **rooms,
 	else if (((t_chat_room *)(*rooms)->content)->passwd
 				!= hash_data(args[1], ft_strlen(args[1])))
 		return ("* Invalid access password to the room *");
-	else if (!(*c_dup = malloc(sizeof(t_client))))
-		return ("* Server feels bad *");
-	ft_memcpy(*c_dup, client, sizeof(t_client));
 	return (NULL);
 }
 
-const char	*new_chat_room(const char *name, const char *passwd)
+const char	*new_chat_room(const char *name, const char *passwd, uint8_t unique)
 {
 	t_dlist		*rooms;
 	t_chat_room	*new_room;
@@ -85,8 +82,8 @@ const char	*new_chat_room(const char *name, const char *passwd)
 			&& !h_clean(new_room - h_clean(new_room->name)))
 			return ("* Room with this name already exists *");
 	new_room->passwd = hash_data(passwd, ft_strlen(passwd));
-	sprintf(new_room->log_name, "./logs/log_chat_%s_%ld.txt",
-			new_room->name, time(NULL));
+	sprintf(new_room->log_name, unique ? "./logs/log_chat_%s_%ld.txt"
+		: "./logs/log_chat_%s.txt", new_room->name, time(NULL));
 	if ((new_room->log_fd = open(new_room->log_name, O_LOG_FLAGS)) < 0)
 		return ("* Server feels bad *" - h_clean(new_room));
 	ft_dlstpush_back(&g_env.all_rooms, ft_dlstnew(new_room, sizeof(void *)));

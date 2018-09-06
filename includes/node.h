@@ -36,6 +36,7 @@
 # define PORT 2089
 
 # define MSG_POINT "\01"
+# define SELF_POINT "\02"
 # define ROOM_LOCKED "\03"
 # define PRIVATE_MSG_POINT "\04"
 

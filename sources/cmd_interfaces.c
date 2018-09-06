@@ -34,7 +34,6 @@ void	toogle_silent_mode(t_client *client)
 	const char	*msg_d = "* Silent mode disabled *";
 
 	client->silent_mode ^= 1;
-	((t_client *)client->node_in_room->content)->silent_mode ^= 1;
 	client->silent_mode
 		? send_data(client->sockfd, msg_e, ft_strlen(msg_e) + 1, 0)
 		: send_data(client->sockfd, msg_d, ft_strlen(msg_d) + 1, 0);
@@ -46,7 +45,7 @@ void	create_chat_room(t_client *client, const char **args)
 	char		*room_name;
 
 	room_name = ft_strtrim(args[0]);
-	!(msg = new_chat_room(room_name, args[1])) ? update_room_list(NULL) : 0;
+	!(msg = new_chat_room(room_name, args[1], 1)) ? update_room_list(NULL) : 0;
 	free(room_name);
 	!msg ? msg = "* Room successfully created *" : 0;
 	send_data(client->sockfd, msg, ft_strlen(msg) + 1, 0);
@@ -56,14 +55,13 @@ void	join_chat_room(t_client *client, const char **args)
 {
 	const char	*msg;
 	t_dlist		*rooms;
-	t_client	*c_dup;
 
-	if ((msg = validate_room_data(args, &rooms, client, &c_dup)))
+	if ((msg = validate_room_data(args, &rooms, client)))
 		return ((void)send_data(client->sockfd, msg, ft_strlen(msg) + 1, 0));
 	log_client_actions(client, "LEFT_ROOM", "left the room");
-	ft_dlstdelelem(&client->node_in_room);
+	ft_dlstdelelem_cs(&client->node_in_room);
 	update_clients_data(client->chat_room_node->content);
-	client->node_in_room = ft_dlstnew(c_dup, sizeof(void *));
+	client->node_in_room = ft_dlstnew(client, sizeof(void *));
 	client->chat_room_node = rooms;
 	ft_dlstpush(&((t_chat_room *)rooms->content)->users, client->node_in_room);
 	update_clients_data(client->chat_room_node->content);

@@ -31,7 +31,7 @@ void	send_pm(t_client *client, const char **args)
 		err = "* You are in user's blacklist! *";
 	if (err || (!(msg = malloc((int)MAX_NICKNAME_LEN * 8 + 16))))
 		return ((void)send_data(client->sockfd, err, ft_strlen(err) + 1, 0));
-	it = sprintf(msg, PRIVATE_MSG_POINT"[%s]:", client->nickname) * 0;
+	it = sprintf(msg, "\a"PRIVATE_MSG_POINT"[%s]:", client->nickname) * 0;
 	while (args && args[++it])
 		msg = ft_vstrjoin(3, msg, " ", args[it]) - h_clean(msg);
 	send_data(user->sockfd, msg, ft_strlen(msg) + 1, 0) < 0
@@ -59,10 +59,7 @@ void	block_user(t_client *client, const char **args)
 		err = "* User successfully unblocked *";
 		ft_dlstdelelem_cs(&bl_node);
 	}
-	else
-	{
-		err = "* User successfully blocked *";
+	else if ((err = "* User successfully blocked *"))
 		ft_dlstpush(&client->blacklist, ft_dlstnew(user, sizeof(void *)));
-	}
 	send_data(client->sockfd, err, ft_strlen(err) + 1, 0);
 }

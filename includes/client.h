@@ -24,8 +24,6 @@
 # define RL_KEY_PAGEDOWN 0x7E365B1B
 # define RL_KEY_ESC 0x1b
 
-# define SELF_POINT "\02"
-
 # define TERM_MIN_WIDTH 40
 # define TERM_MIN_HEIGHT 9
 
