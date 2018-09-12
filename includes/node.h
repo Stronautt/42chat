@@ -32,6 +32,7 @@
 # include <readline/history.h>
 # include <signal.h>
 # include <event.h>
+# include <math.h>
 
 # define PORT 2089
 
@@ -42,27 +43,36 @@
 
 # define MSG_MAX_LEN 255
 # define MAX_NICKNAME_LEN 15
+# define MAX_DATA_SIZE INT16_MAX
 
 typedef enum	e_command
 {
-	NO_CMD = 0, UPDATE_USERS, UPDATE_ROOMS, UPDATE_HISTORY, RECONNECT
+	NO_CMD = 0, UPDATE_USERS, UPDATE_ROOMS,	UPDATE_HISTORY, RECONNECT
 }				t_command;
 
 typedef struct	s_packet
 {
 	ssize_t		size;
+	size_t		count;
 	uint64_t	crs_sum;
 	t_command	cmd;
 }				t_packet;
 
 /*
-**				Data_exchange.c
-**				↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
+**				Data_helpers.c
+**				↓↓↓↓↓↓↓↓↓↓↓↓↓↓
 */
 
 int				good_connection(int sockfd);
 
 uint64_t		hash_data(const void *data, size_t size);
+
+uint64_t		hash_packet(const t_packet *packet, const void *data);
+
+/*
+**				Data_exchange.c
+**				↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
+*/
 
 ssize_t			send_data(int sockfd, const void *data,
 							size_t size, t_command command);

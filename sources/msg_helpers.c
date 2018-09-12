@@ -12,15 +12,29 @@
 
 #include "server.h"
 
-static inline int	nickname_is_busy(const char *nickname, t_dlist *list)
+void	sync_chat_history(t_client *c)
 {
-	t_dlist		*clients;
+	int					fd;
+	char				*data;
+	ssize_t				fs;
+	struct stat			sb;
+	static t_chat_room	*c_room;
 
-	clients = list;
-	while (clients && (clients = clients->next) != list)
-		if (!strcasecmp(((t_client *)clients->content)->nickname, nickname))
-			return (1);
-	return (0);
+	c_room = (t_chat_room *)c->chat_room_node->content;
+	if (!(fs = stat(c_room->log_name, &sb) < 0 ? -1 : sb.st_size))
+		return ;
+	else if (!c_room || (fd = open(c_room->log_name, O_RDONLY)) < 0 || fs < 0
+		|| (data = mmap(NULL, fs, PROT_READ, MAP_PRIVATE, fd, 0)) == MAP_FAILED)
+		return ((void)send_data(c->sockfd, HISTORY_ERR,
+					ft_strlen(HISTORY_ERR) + 1, UPDATE_HISTORY));
+	c_room = malloc(fs + 1);
+	ft_memcpy(c_room, data, fs);
+	((char *)c_room)[fs] = 0;
+	if (send_data(c->sockfd, c_room, fs + 1, UPDATE_HISTORY) < 0)
+		disconnect_client(find_user_addr(c, g_env.all_clients));
+	munmap(data, fs);
+	free(c_room);
+	close(fd);
 }
 
 int					get_nickname(t_client *client, t_command *cmd)
@@ -38,12 +52,12 @@ int					get_nickname(t_client *client, t_command *cmd)
 	else if (!h_clean(ret) && !nickname_is_valid((nname = ft_strtrim(raw))
 		+ h_clean(raw)) && !h_clean(nname) && !(nname = ft_strdup("H@ZZk3R")))
 		return (-1);
-	else if (nickname_is_busy(nname, g_env.all_clients) && (it = 1))
+	else if (find_user_nickname(nname, g_env.all_clients) && (it = 1))
 	{
 		if (!(raw = malloc(ft_strlen(nname) + 16)))
 			return (h_clean(nname) - 1);
 		while (sprintf(raw, "%s(%d)", nname, it++))
-			if (!nickname_is_busy(raw, g_env.all_clients))
+			if (!find_user_nickname(raw, g_env.all_clients))
 				break ;
 		nname = raw - h_clean(nname);
 	}

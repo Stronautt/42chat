@@ -61,7 +61,7 @@ void	update_clients_data(t_chat_room *room)
 	while (user && (user = user->next) != room->users)
 		if (send_data(((t_client *)user->content)->sockfd,
 				data, data_len + 1, UPDATE_USERS) < 0 && (user = user->prev))
-			disconnect_client(user->next);
+			disconnect_client(find_user_addr(user->next->content, g_env.all_clients));
 	free(data);
 }
 
@@ -80,31 +80,4 @@ void	update_room_list(t_client *client)
 				&& (client_node = client_node->prev))
 				disconnect_client(client_node->next);
 	free(r_list);
-}
-
-void	sync_chat_history(t_client *c)
-{
-	int					fd;
-	char				buffer[1024];
-	ssize_t				buf_len;
-	char				*data;
-	static t_chat_room	*c_room;
-
-	c_room = (t_chat_room *)c->chat_room_node->content;
-	if (!c_room || (fd = open(c_room->log_name, O_RDONLY)) < 0)
-	{
-		return ((void)send_data(c->sockfd, HISTORY_ERR,
-					ft_strlen(HISTORY_ERR) + 1, UPDATE_HISTORY));
-	}
-	data = ft_strnew(0);
-	while ((buf_len = read(fd, buffer, sizeof(buffer) - 1)) > 0)
-	{
-		buffer[buf_len] = 0;
-		data = ft_strjoin(data, buffer) - h_clean(data);
-	}
-	buf_len < 0
-		? send_data(c->sockfd, HISTORY_ERR,
-							ft_strlen(HISTORY_ERR) + 1, UPDATE_HISTORY)
-		: send_data(c->sockfd, data, ft_strlen(data) + 1, UPDATE_HISTORY);
-	free(data);
 }

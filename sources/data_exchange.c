@@ -12,75 +12,93 @@
 
 #include "node.h"
 
-int			good_connection(int sockfd)
+static ssize_t		send_parts(int sockfd, const void *data, ssize_t data_len)
 {
-	int			error;
-	socklen_t	len;
+	ssize_t	it;
+	ssize_t	ret;
+	ssize_t	tmp;
 
-	error = 0;
-	len = sizeof(error);
-	if (getsockopt(sockfd, SOL_SOCKET, SO_ERROR, &error, &len) != 0)
-		return (0);
-	else if (error)
-		return (0);
-	return (1);
+	it = -MAX_DATA_SIZE;
+	ret = 0;
+	while ((it += MAX_DATA_SIZE) <= data_len)
+	{
+		tmp = (data_len - it > MAX_DATA_SIZE ? MAX_DATA_SIZE : data_len - it);
+		if ((tmp = send(sockfd, data + it, tmp, 0)) < 0)
+			return (-1);
+		ret += tmp;
+	}
+	return (ret);
 }
 
-uint64_t	hash_data(const void *data, size_t size)
-{
-	uint64_t		hash;
-	unsigned char	*tmp;
-
-	hash = 5381;
-	tmp = (unsigned char *)data;
-	if (!data || !size)
-		return (0);
-	while (size--)
-		hash = ((hash << 5) + hash) + *tmp++;
-	return (hash);
-}
-
-ssize_t		send_data(int sockfd, const void *data,
-						size_t size, t_command command)
+ssize_t				send_data(int sockfd, const void *data,
+								size_t size, t_command command)
 {
 	t_packet	*packet;
 
-	if (size > INT32_MAX / 2)
-		return (-1);
 	packet = ft_memalloc(sizeof(t_packet));
-	packet->size = size;
+	packet->size = data ? size : 0;
+	packet->count = ceil((double)size / (double)MAX_DATA_SIZE);
 	packet->cmd = command;
-	packet->crs_sum = hash_data(data, size);
-	packet->crs_sum += (packet->crs_sum << (packet->size % 5));
-	packet->crs_sum += packet->cmd;
+	packet->crs_sum = hash_packet(packet, data);
 	if (!good_connection(sockfd))
 		return (h_clean(packet) - 1);
 	else if (send(sockfd, packet, sizeof(t_packet), 0) < 0)
 		return (h_clean(packet) - 1);
+	else if (size > MAX_DATA_SIZE)
+		return (send_parts(sockfd, data, size) - h_clean(packet));
 	return (send(sockfd, data, size, 0) - h_clean(packet));
 }
 
+static ssize_t		recieve_parts(int sockfd, t_packet *packet,
+									void **data, int flg)
+{
+	void		*ptr;
+	ssize_t		it;
+	ssize_t		tmp;
+	ssize_t		size;
+
+	if (!data || !packet)
+		return (-1);
+	*data = NULL;
+	it = -MAX_DATA_SIZE;
+	size = 0;
+	while ((it += MAX_DATA_SIZE) <= packet->size)
+	{
+		tmp = (packet->size - it > MAX_DATA_SIZE
+			? MAX_DATA_SIZE : packet->size - it);
+		if (!(ptr = malloc(tmp)))
+			return (h_clean(*data) - 1);
+		else if (tmp != recv(sockfd, ptr, tmp, flg))
+			return (h_clean(ptr) - h_clean(*data) - 1);
+		*data = ft_memjoin(*data, ptr, size, tmp) - h_clean(*data);
+		size += tmp;
+	}
+	if (size != packet->size || packet->crs_sum != hash_packet(packet, *data))
+		return (-1);
+	return (size);
+}
+
 ssize_t		recieve_data(int sockfd, void **data,
-							t_command *command, int flags)
+							t_command *command, int flg)
 {
 	t_packet	packet;
 	void		*tmp;
-	uint64_t	tmp_crs;
 
-	data ? *data = 0 : 0;
-	if (!good_connection(sockfd))
+	data ? *data = NULL : 0;
+	tmp = NULL;
+	if (!good_connection(sockfd)
+		|| recv(sockfd, &packet, sizeof(t_packet), flg) < 0
+		|| packet.size < 0 || packet.size / packet.count > MAX_DATA_SIZE
+		|| (packet.count > 1 && recieve_parts(sockfd, &packet, &tmp, flg) < 0))
 		return (-1);
-	else if (recv(sockfd, &packet, sizeof(t_packet), flags) < 0)
-		return (-1);
-	else if (packet.size < 0 || packet.size > INT32_MAX / 2)
-		return (-1);
-	else if (!(tmp = ft_memalloc(packet.size)))
-		return (-1);
-	else if ((packet.size = recv(sockfd, tmp, packet.size, flags)) < 0)
-		return (h_clean(tmp) - 1);
-	tmp_crs = hash_data(tmp, packet.size);
-	if (packet.crs_sum != tmp_crs + (tmp_crs << (packet.size % 5)) + packet.cmd)
-		return (h_clean(tmp) - 1);
+	else if (packet.count <= 1)
+	{
+		if (!(tmp = ft_memalloc(packet.size))
+			|| packet.size != recv(sockfd, tmp, packet.size, flg))
+			return (h_clean(tmp) - 1);
+		else if (packet.crs_sum != hash_packet(&packet, tmp))
+			return (h_clean(tmp) - 1);
+	}
 	data ? *data = tmp : free(tmp);
 	command ? *command = packet.cmd : 0;
 	return (packet.size);

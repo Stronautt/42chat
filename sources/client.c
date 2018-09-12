@@ -32,7 +32,7 @@ void			get_messages(void)
 	t_command		cmd;
 
 	if (recieve_data(g_env.sockfd, (void **)&buffer,
-						&cmd, MSG_WAITALL) <= 0)
+						&cmd, MSG_WAITALL) < 0)
 		return ;
 	else if (cmd != NO_CMD)
 		return (proceed_cmds(cmd, buffer));

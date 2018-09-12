@@ -45,7 +45,8 @@ void	create_chat_room(t_client *client, const char **args)
 	char		*room_name;
 
 	room_name = ft_strtrim(args[0]);
-	!(msg = new_chat_room(room_name, args[1], 1)) ? update_room_list(NULL) : 0;
+	!(msg = new_chat_room(room_name, args[1], args[1] && *args[1]))
+		? update_room_list(NULL) : 0;
 	free(room_name);
 	!msg ? msg = "* Room successfully created *" : 0;
 	send_data(client->sockfd, msg, ft_strlen(msg) + 1, 0);

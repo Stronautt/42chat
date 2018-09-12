@@ -46,6 +46,7 @@ void			update_chat_history(char *raw)
 {
 	if (!raw)
 		return ;
+	render_call(display_chat, g_env.ws.chat);
 	g_env.layot.chat_offset = 0;
 	ft_dlstclear(&g_env.chat_history.lines);
 	g_env.chat_history.lines = ft_strsplit_dlst(raw, '\n');

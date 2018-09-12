@@ -69,10 +69,10 @@ void	log_client_actions(t_client *client,
 	t_chat_room	*chat_room;
 	t_dlist		*clients;
 
+	if (!client || !status || !public_status || !(msg = ft_strnew(256)))
+		return ;
 	time(&timer);
 	tm_info = localtime(&timer);
-	if (!(msg = ft_strnew(256)))
-		return ;
 	strftime(msg, 256, "%Y-%m-%d %H:%M:%S", tm_info);
 	dprintf(g_env.sys_fd, "[%s][%s] -> %s\n", msg, client->nickname, status);
 	sprintf(msg, "* %s %s *", client->nickname, public_status);
@@ -80,9 +80,9 @@ void	log_client_actions(t_client *client,
 	dprintf(chat_room->log_fd, "%s\n", msg);
 	clients = chat_room->users;
 	while (clients && (clients = clients->next) != chat_room->users)
-		if (clients->content && clients != client->node_in_room)
+		if (clients->content && clients->content != client)
 			send_data(((t_client *)clients->content)->sockfd,
-												msg, ft_strlen(msg) + 1, 0);
+						msg, ft_strlen(msg) + 1, 0);
 	free(msg);
 }
 
@@ -91,7 +91,11 @@ void	disconnect_client(t_dlist *client_node)
 	t_client	*client;
 	t_chat_room	*room;
 
+	if (!client_node)
+		return ;
 	client = client_node->content;
+	if (!client || !client->chat_room_node)
+		return ;
 	room = client->chat_room_node->content;
 	if (*client->nickname)
 		log_client_actions(client, "DISCONNECTED", "left the chat");

@@ -36,7 +36,8 @@ int					read_client_msg(t_client *user, t_command *cmd)
 	while (clients && (clients = clients->next) != chat_room->users)
 		if (send_msg(clients->content, p_msg, ml, clients->content == user) < 0
 			&& (clients = clients->prev))
-				disconnect_client(clients->next);
+				disconnect_client(find_user_addr(clients->next->content,
+												g_env.all_clients));
 	return (h_clean(p_msg) + ml);
 }
 
@@ -45,10 +46,11 @@ void				listen_client(int fd, short ev, t_dlist *c_node)
 	t_client 	*user;
 	t_command	cmd;
 
-	(void)fd;
 	(void)ev;
 	if (!(user = (t_client *)c_node->content))
 		return ;
+	else if (time(NULL) - user->last_msg_stamp < 1)
+		recieve_data(fd, 0, 0, 0);
 	else if (!*user->nickname)
 	{
 		if (get_nickname(user, &cmd) < 0)
@@ -64,6 +66,7 @@ void				listen_client(int fd, short ev, t_dlist *c_node)
 	}
 	else if (read_client_msg(user, &cmd) < 0)
 		return (disconnect_client(c_node));
+	user->last_msg_stamp = time(NULL);
 }
 
 void				handle_con(void)

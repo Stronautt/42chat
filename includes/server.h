@@ -14,6 +14,8 @@
 # define SERVER_H
 
 # include "node.h"
+# include <sys/mman.h>
+# include <sys/stat.h>
 
 # define MAX_ROOMS_NUMBER 1024
 
@@ -36,6 +38,7 @@ typedef struct	s_client
 	uint8_t			silent_mode;
 	struct event	ev;
 	char			nickname[(MAX_NICKNAME_LEN + 1) * 4];
+	uint64_t		last_msg_stamp;
 	t_dlist			*chat_room_node;
 	t_dlist			*node_in_room;
 	t_dlist			*blacklist;
@@ -129,6 +132,8 @@ void			disconnect_client(t_dlist *client_node);
 **				↓↓↓↓↓↓↓↓↓↓↓↓↓
 */
 
+void			sync_chat_history(t_client *c);
+
 int				get_nickname(t_client *client, t_command *cmd);
 
 ssize_t			send_msg(t_client *client, const char *msg,
@@ -151,8 +156,6 @@ char			*get_room_list(void);
 void			update_clients_data(t_chat_room *room);
 
 void			update_room_list(t_client *client);
-
-void			sync_chat_history(t_client *c);
 
 /*
 **				Cmd_interfaces.c
