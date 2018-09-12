@@ -12,28 +12,34 @@
 
 #include "libft.h"
 
-t_dlist			*ft_strsplit_dlst(char const *s, char c)
+static inline void 	*protocol_clean(t_dlist **dlst, void *data)
 {
-	t_dlist	*dlst;
-	t_dlist	*tmp;
-	char	**splitted;
-	ssize_t	it;
+	ft_dlstclear(dlst);
+	free(data);
+	return (NULL);
+}
 
+t_dlist				*ft_strsplit_dlst(char const *s, char c)
+{
+	size_t	offset;
+	char	*part;
+	t_dlist	*dlst;
+	t_dlist	*new;
+
+	if (!s--)
+		return (NULL);
 	dlst = NULL;
-	if (!s)
-		return (NULL);
-	else if (!(splitted = ft_strsplit(s, c)))
-		return (NULL);
-	it = -1;
-	while (splitted[++it])
-	{
-		if (!(tmp = ft_dlstnew(splitted[it], sizeof(void *))))
+	while (*++s)
+		if (*s != c && (offset = ft_strclen(s, c)))
 		{
-			ft_dlstclear(&dlst);
-			return (NULL);
+			if (!(part = ft_strsub(s, 0, offset)))
+				return (protocol_clean(&dlst, part));
+			else if (!(new = ft_dlstnew(part, offset)))
+				return (protocol_clean(&dlst, part));
+			ft_dlstpush(&dlst, new);
+			if (!dlst)
+				return (protocol_clean(&dlst, part));
+			s += offset - 1;
 		}
-		ft_dlstpush(&dlst, tmp);
-	}
-	free(splitted);
 	return (dlst);
 }
