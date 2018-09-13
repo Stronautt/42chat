@@ -15,9 +15,10 @@ NAME_2		=	42chat
 
 CC			=	gcc
 
-CFLAGS		=	-g3
-CFLAGS		+=	-Wextra -Werror -Wall
-CFLAGS		+=	-O2 -fdata-sections -ffunction-sections
+CFLAGS		+=	-Wextra -Werror -Wall -O2 -g3 -fno-unwind-tables				\
+				-fno-asynchronous-unwind-tables
+BFLAGS		=	-s -ffunction-sections -fdata-sections	-fno-ident				\
+				-fmerge-all-constants
 
 HDRSDIR		=	./includes
 
@@ -53,12 +54,12 @@ all: lib $(NAME_1) $(NAME_2)
 
 $(NAME_1): $(OBJ_1) $(HDRS) $(LIBSDEPS)
 	@printf "\n\033[32m[Creating $(NAME_1)].......\033[0m"
-	@$(CC) $(CFLAGS) -o $(NAME_1) $(OBJ_1) $(LIBRARIES)
+	@$(CC) $(CFLAGS) $(BFLAGS) -o $(NAME_1) $(OBJ_1) $(LIBRARIES)
 	@printf "\033[32m[DONE]\033[0m\n"
 
 $(NAME_2): $(OBJ_2) $(HDRS) $(LIBSDEPS)
 	@printf "\n\033[32m[Creating $(NAME_2)].......\033[0m"
-	@$(CC) $(CFLAGS) -o $(NAME_2) $(OBJ_2) $(LIBRARIES) -lreadline -lncursesw
+	@$(CC) $(CFLAGS) $(BFLAGS) -o $(NAME_2) $(OBJ_2) $(LIBRARIES) -lreadline -lncursesw
 	@printf "\033[32m[DONE]\033[0m\n"
 
 $(call uniq, $(OBJ_1) $(OBJ_2)): $(OBJDIR)/%.o : $(SRCSDIR)/%.c $(HDRS)
