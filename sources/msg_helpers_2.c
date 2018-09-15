@@ -6,7 +6,7 @@
 /*   By: pgritsen <pgritsen@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2018/09/02 15:12:36 by pgritsen          #+#    #+#             */
-/*   Updated: 2018/09/02 15:14:15 by pgritsen         ###   ########.fr       */
+/*   Updated: 2018/09/15 12:45:08 by pgritsen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -61,7 +61,8 @@ void	update_clients_data(t_chat_room *room)
 	while (user && (user = user->next) != room->users)
 		if (send_data(((t_client *)user->content)->sockfd,
 				data, data_len + 1, UPDATE_USERS) < 0 && (user = user->prev))
-			disconnect_client(find_user_addr(user->next->content, g_env.all_clients));
+			disconnect_client(
+				find_user_addr(user->next->content, g_env.all_clients));
 	free(data);
 }
 

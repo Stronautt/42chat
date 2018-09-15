@@ -6,7 +6,7 @@
 /*   By: pgritsen <pgritsen@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2018/07/30 17:43:46 by pgritsen          #+#    #+#             */
-/*   Updated: 2018/09/02 14:08:53 by pgritsen         ###   ########.fr       */
+/*   Updated: 2018/09/15 12:41:45 by pgritsen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -47,7 +47,7 @@
 
 typedef enum	e_command
 {
-	NO_CMD = 0, UPDATE_USERS, UPDATE_ROOMS,	UPDATE_HISTORY, RECONNECT
+	NO_CMD = 0, UPDATE_USERS, UPDATE_ROOMS, UPDATE_HISTORY, RECONNECT
 }				t_command;
 
 typedef struct	s_packet

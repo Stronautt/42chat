@@ -6,13 +6,13 @@
 /*   By: pgritsen <pgritsen@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2018/09/02 15:19:21 by pgritsen          #+#    #+#             */
-/*   Updated: 2018/09/02 15:34:45 by pgritsen         ###   ########.fr       */
+/*   Updated: 2018/09/15 12:52:26 by pgritsen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "server.h"
 
-void	sync_chat_history(t_client *c)
+void				sync_chat_history(t_client *c)
 {
 	int					fd;
 	char				*data;
@@ -25,8 +25,10 @@ void	sync_chat_history(t_client *c)
 		return ;
 	else if (!c_room || (fd = open(c_room->log_name, O_RDONLY)) < 0 || fs < 0
 		|| (data = mmap(NULL, fs, PROT_READ, MAP_PRIVATE, fd, 0)) == MAP_FAILED)
+	{
 		return ((void)send_data(c->sockfd, HISTORY_ERR,
 					ft_strlen(HISTORY_ERR) + 1, UPDATE_HISTORY));
+	}
 	c_room = malloc(fs + 1);
 	ft_memcpy(c_room, data, fs);
 	((char *)c_room)[fs] = 0;

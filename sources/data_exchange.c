@@ -6,7 +6,7 @@
 /*   By: pgritsen <pgritsen@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2018/08/01 13:14:19 by pgritsen          #+#    #+#             */
-/*   Updated: 2018/09/02 15:34:38 by pgritsen         ###   ########.fr       */
+/*   Updated: 2018/09/15 12:42:07 by pgritsen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -78,7 +78,7 @@ static ssize_t		recieve_parts(int sockfd, t_packet *packet,
 	return (size);
 }
 
-ssize_t		recieve_data(int sockfd, void **data,
+ssize_t				recieve_data(int sockfd, void **data,
 							t_command *command, int flg)
 {
 	t_packet	packet;

@@ -6,7 +6,7 @@
 /*   By: pgritsen <pgritsen@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2018/09/02 13:55:58 by pgritsen          #+#    #+#             */
-/*   Updated: 2018/09/02 15:18:43 by pgritsen         ###   ########.fr       */
+/*   Updated: 2018/09/15 12:44:35 by pgritsen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,7 +24,7 @@ static void		redraw_windows(const short s_w)
 	wrefresh(g_env.ws.u_online_b);
 	wrefresh(g_env.ws.rooms_a_b);
 	g_env.layot.chat_offset + g_env.ws.chat->_maxy - g_env.layot.chat_msg_h_corr
-		+ 1	> g_env.chat_history.size ? g_env.layot.chat_offset = 0 : 0;
+		+ 1 > g_env.chat_history.size ? g_env.layot.chat_offset = 0 : 0;
 	g_env.layot.u_online_offset + g_env.ws.u_online->_maxy
 		> g_env.users_online.size ? g_env.layot.u_online_offset = 0 : 0;
 	g_env.layot.rooms_a_offset + g_env.ws.rooms_a->_maxy
@@ -75,7 +75,8 @@ void			resize_curses(void)
 		curs_set(0);
 		erase();
 		werase(g_env.ws.input);
-		mvprintw(g_env.term_size.ws_row / 2, offset < 0 ? 0 : offset, "Window too small!");
+		mvprintw(g_env.term_size.ws_row / 2, offset < 0 ? 0 : offset,
+					"Window too small!");
 		refresh();
 	}
 	else

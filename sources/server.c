@@ -6,7 +6,7 @@
 /*   By: pgritsen <pgritsen@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2018/07/31 17:16:33 by pgritsen          #+#    #+#             */
-/*   Updated: 2018/09/02 15:33:27 by pgritsen         ###   ########.fr       */
+/*   Updated: 2018/09/15 12:53:25 by pgritsen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,14 +36,14 @@ int					read_client_msg(t_client *user, t_command *cmd)
 	while (clients && (clients = clients->next) != chat_room->users)
 		if (send_msg(clients->content, p_msg, ml, clients->content == user) < 0
 			&& (clients = clients->prev))
-				disconnect_client(find_user_addr(clients->next->content,
-												g_env.all_clients));
+			disconnect_client(
+				find_user_addr(clients->next->content, g_env.all_clients));
 	return (h_clean(p_msg) + ml);
 }
 
 void				listen_client(int fd, short ev, t_dlist *c_node)
 {
-	t_client 	*user;
+	t_client	*user;
 	t_command	cmd;
 
 	(void)ev;

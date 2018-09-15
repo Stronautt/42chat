@@ -6,13 +6,13 @@
 /*   By: pgritsen <pgritsen@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2017/11/04 21:27:45 by pgritsen          #+#    #+#             */
-/*   Updated: 2017/12/13 15:42:37 by pgritsen         ###   ########.fr       */
+/*   Updated: 2018/09/15 12:56:19 by pgritsen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "libft.h"
 
-static inline void 	*protocol_clean(t_dlist **dlst, void *data)
+static inline void	*protocol_clean(t_dlist **dlst, void *data)
 {
 	ft_dlstclear(dlst);
 	free(data);
