@@ -9,7 +9,7 @@ case "${unameOut}" in
     *)          machine="UNKNOWN:${unameOut}"
 esac
 
-unameOut=`uname -o`
+unameOut=`uname -o 2>/dev/null`
 case "${unameOut}" in
     GNU\/Linux*) opsystem=Linux;;
     Android*)   opsystem=Android;;
@@ -30,7 +30,9 @@ if [[ $machine == "Linux" ]]; then
 elif [[ $machine == "Mac" ]]; then
 	mkdir -p ./logs;
 	brew update;
-	curl -fsSL https://rawgit.com/kube/42homebrew/master/install.sh | zsh;
+	if [[ ! -f $HOME/.brewconfig.zsh ]] && [[ $(uname -n) =~ 'unit.ua' ]]; then
+		curl -fsSL https://rawgit.com/kube/42homebrew/master/install.sh | zsh;
+	fi
 	source ~/.zshrc;
 	brew install libevent readline ncurses;
 	brew link readline libevent ncurses;
