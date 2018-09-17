@@ -24,18 +24,16 @@ void				sync_chat_history(t_client *c)
 	if (!(fs = stat(c_room->log_name, &sb) < 0 ? -1 : sb.st_size))
 		return ;
 	else if (!c_room || (fd = open(c_room->log_name, O_RDONLY)) < 0 || fs < 0
-		|| (data = mmap(NULL, fs, PROT_READ, MAP_PRIVATE, fd, 0)) == MAP_FAILED)
+		|| (data = mmap(NULL, fs + 1, PROT_READ | PROT_WRITE,
+			MAP_PRIVATE, fd, 0)) == MAP_FAILED)
 	{
 		return ((void)send_data(c->sockfd, HISTORY_ERR,
 					ft_strlen(HISTORY_ERR) + 1, UPDATE_HISTORY));
 	}
-	c_room = malloc(fs + 1);
-	ft_memcpy(c_room, data, fs);
-	((char *)c_room)[fs] = 0;
-	if (send_data(c->sockfd, c_room, fs + 1, UPDATE_HISTORY) < 0)
+	data[fs] = 0;
+	if (send_data(c->sockfd, data, fs + 1, UPDATE_HISTORY) < 0)
 		disconnect_client(find_user_addr(c, g_env.all_clients));
-	munmap(data, fs);
-	free(c_room);
+	munmap(data, fs + 1);
 	close(fd);
 }
 

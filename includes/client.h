@@ -122,11 +122,11 @@ void			display_chat(void);
 **				↓↓↓↓↓↓↓↓↓↓↓↓↓
 */
 
-void			update_rooms(char *raw);
+void			update_rooms(const char *raw);
 
-void			update_users_online(char *raw);
+void			update_users_online(const char *raw);
 
-void			update_chat_history(char *raw);
+void			update_chat_history(const char *raw);
 
 /*
 **				Key_handler.c

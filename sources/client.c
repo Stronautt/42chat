@@ -22,6 +22,7 @@ void			proceed_cmds(t_command cmd, char *data)
 		update_rooms(data);
 	else if (cmd == UPDATE_HISTORY)
 		update_chat_history(data);
+	return (free(data));
 }
 
 void			get_messages(void)

@@ -12,45 +12,45 @@
 
 #include "client.h"
 
-void			update_rooms(char *raw)
+void			update_rooms(const char *raw)
 {
-	if (!raw)
-		return ;
 	g_env.layot.u_online_offset = 0;
 	ft_dlstclear(&g_env.rooms_avaliable.lines);
-	g_env.rooms_avaliable.lines = ft_strsplit_dlst(raw, ' ');
-	g_env.rooms_avaliable.size = ft_dlstsize(g_env.rooms_avaliable.lines);
-	free(raw);
+	if (raw)
+	{
+		g_env.rooms_avaliable.lines = ft_strsplit_dlst(raw, ' ');
+		g_env.rooms_avaliable.size = ft_dlstsize(g_env.rooms_avaliable.lines);
+	}
 	render_call(display_rooms, g_env.ws.rooms_a);
 }
 
-void			update_users_online(char *raw)
+void			update_users_online(const char *raw)
 {
 	char	*users;
 
-	if (!raw)
-		return ;
-	else if (!(users = ft_strchr(raw, ':')))
-		return (free(raw));
-	g_env.room_name ? free(g_env.room_name) : 0;
-	g_env.room_name = ft_get_content(raw, '[', ']');
+
 	g_env.layot.u_online_offset = 0;
 	ft_dlstclear(&g_env.users_online.lines);
-	g_env.users_online.lines = ft_strsplit_dlst(users + 1, ' ');
-	g_env.users_online.size = ft_dlstsize(g_env.users_online.lines);
-	free(raw);
+	if (raw)
+	{
+		if (!(users = ft_strchr(raw, ':')))
+			return ;
+		g_env.room_name ? free(g_env.room_name) : 0;
+		g_env.room_name = ft_get_content(raw, '[', ']');
+		g_env.users_online.lines = ft_strsplit_dlst(users + 1, ' ');
+		g_env.users_online.size = ft_dlstsize(g_env.users_online.lines);
+	}
 	render_call(display_users_online, g_env.ws.u_online);
 }
 
-void			update_chat_history(char *raw)
+void			update_chat_history(const char *raw)
 {
-	if (!raw)
-		return ;
-	render_call(display_chat, g_env.ws.chat);
 	g_env.layot.chat_offset = 0;
 	ft_dlstclear(&g_env.chat_history.lines);
-	g_env.chat_history.lines = ft_strsplit_dlst(raw, '\n');
-	g_env.chat_history.size = ft_dlstsize(g_env.chat_history.lines);
-	free(raw);
+	if (raw)
+	{
+		g_env.chat_history.lines = ft_strsplit_dlst(raw, '\n');
+		g_env.chat_history.size = ft_dlstsize(g_env.chat_history.lines);
+	}
 	render_call(display_chat, g_env.ws.chat);
 }
