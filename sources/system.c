@@ -64,25 +64,23 @@ void	log_client_actions(t_client *client,
 							const char *status, const char *public_status)
 {
 	time_t		timer;
+	size_t		msg_len;
 	char		*msg;
-	struct tm	*tm_info;
 	t_chat_room	*chat_room;
 	t_dlist		*clients;
 
 	if (!client || !status || !public_status || !(msg = ft_strnew(256)))
 		return ;
 	time(&timer);
-	tm_info = localtime(&timer);
-	strftime(msg, 256, "%Y-%m-%d %H:%M:%S", tm_info);
+	strftime(msg, 256, "%Y-%m-%d %H:%M:%S", localtime(&timer));
 	dprintf(g_env.sys_fd, "[%s][%s] -> %s\n", msg, client->nickname, status);
 	sprintf(msg, "* %s %s *", client->nickname, public_status);
 	chat_room = client->chat_room_node->content;
-	dprintf(chat_room->log_fd, "%s\n", msg);
+	msg_len = ft_strlen(msg) + 1;
 	clients = chat_room->users;
 	while (clients && (clients = clients->next) != chat_room->users)
 		if (clients->content && clients->content != client)
-			send_data(((t_client *)clients->content)->sockfd,
-						msg, ft_strlen(msg) + 1, 0);
+			send_data(((t_client *)clients->content)->sockfd, msg, msg_len, 0);
 	free(msg);
 }
 
