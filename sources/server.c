@@ -124,7 +124,7 @@ int					main(void)
 	pid_t		server_pid;
 
 	if ((server_pid = fork()) < 0)
-		return (ft_printf("Server start failed!\n") * 0 - EXIT_FAILURE);
+		return (ft_printf("Server start failed!\n") * 0 + EXIT_FAILURE);
 	else if (server_pid > 0)
 		return (ft_printf("Server pid -> [%d]\n", server_pid) * 0);
 	server_pid = setsid();

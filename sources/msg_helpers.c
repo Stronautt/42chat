@@ -102,7 +102,7 @@ int					msg_valid(char *msg)
 			len -= 2;
 		else if (*p_s >= 0xE0 && *p_s <= 0xEF && (p_s += 3))
 			len -= 3;
-		else if (*p_s >= 0xF0 && *p_s <= 0xF4 && (p_s += 3))
+		else if (*p_s >= 0xF0 && *p_s <= 0xF4 && (p_s += 4))
 			len -= 4;
 		else if (len--)
 			!ft_isprint(*p_s++) ? *p_s = '*' : 0;
