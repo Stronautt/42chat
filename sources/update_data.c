@@ -6,7 +6,7 @@
 /*   By: pgritsen <pgritsen@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2018/09/02 13:55:58 by pgritsen          #+#    #+#             */
-/*   Updated: 2018/09/02 15:25:16 by pgritsen         ###   ########.fr       */
+/*   Updated: 2018/10/17 12:11:04 by khrechen         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,7 +27,6 @@ void			update_rooms(const char *raw)
 void			update_users_online(const char *raw)
 {
 	char	*users;
-
 
 	g_env.layot.u_online_offset = 0;
 	ft_dlstclear(&g_env.users_online.lines);
