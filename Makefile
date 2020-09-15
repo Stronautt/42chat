@@ -16,7 +16,7 @@ NAME_2		=	42chat
 CC			=	gcc
 
 CFLAGS		=	-Wextra -Werror -Wall -O2 -g3 -fno-unwind-tables				\
-				-fno-asynchronous-unwind-tables
+				-fno-asynchronous-unwind-tables -Wno-cast-function-type
 BFLAGS		=	-s -ffunction-sections -fdata-sections	-fno-ident				\
 				-fmerge-all-constants
 
